@@ -1,7 +1,7 @@
 [
-  { "id": "amsterdam", "name": "Amsterdam", "country": "Netherlands", "pbf": "europe/netherlands-latest.osm.pbf", "bbox": [4.72, 52.27, 5.08, 52.43] },
-  { "id": "baku", "name": "Baku", "country": "Azerbaijan", "pbf": "asia/azerbaijan-latest.osm.pbf", "bbox": [49.65, 40.30, 50.10, 40.55] },
-  { "id": "istanbul", "name": "Istanbul", "country": "Türkiye", "pbf": "europe/turkey-latest.osm.pbf", "bbox": [28.60, 40.80, 29.40, 41.25] },
-  { "id": "london", "name": "London", "country": "United Kingdom", "pbf": "europe/united-kingdom/england/greater-london-latest.osm.pbf", "bbox": [-0.51, 51.28, 0.33, 51.70] },
-  { "id": "berlin", "name": "Berlin", "country": "Germany", "pbf": "europe/germany/berlin-latest.osm.pbf", "bbox": [13.08, 52.33, 13.77, 52.68] }
+  {"id": "amsterdam", "name": "Amsterdam", "country": "Netherlands", "pbf": "netherlands", "bbox": [4.72, 52.27, 5.08, 52.43]},
+  {"id": "baku", "name": "Baku", "country": "Azerbaijan", "pbf": "azerbaijan", "bbox": [49.65, 40.3, 50.1, 40.55]},
+  {"id": "istanbul", "name": "Istanbul", "country": "Türkiye", "pbf": "turkey", "bbox": [28.6, 40.8, 29.4, 41.25]},
+  {"id": "london", "name": "London", "country": "United Kingdom", "pbf": "greater-london", "bbox": [-0.51, 51.28, 0.33, 51.7]},
+  {"id": "berlin", "name": "Berlin", "country": "Germany", "pbf": "berlin", "bbox": [13.08, 52.33, 13.77, 52.68]}
 ]

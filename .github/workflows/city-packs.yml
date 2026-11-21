@@ -25,9 +25,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p work public/packs
+          # "pbf" in cities.json is a Geofabrik region id; look up its download URL.
+          curl -sSfL --retry 3 -o work/index.json https://download.geofabrik.de/index-v1-nogeom.json
           for pbf in $(jq -r '.[].pbf' scripts/cities.json | sort -u); do
-            file="work/$(basename "$pbf")"
-            curl -sSfL --retry 3 -o "$file" "https://download.geofabrik.de/$pbf"
+            url=$(jq -r --arg id "$pbf" '.features[] | select(.properties.id == $id) | .properties.urls.pbf' work/index.json)
+            file="work/$pbf.osm.pbf"
+            if [ -z "$url" ] || ! curl -sSfL --retry 3 -o "$file" "$url"; then
+              echo "::warning::Could not download Geofabrik region $pbf, skipping its cities"
+              continue
+            fi
             for id in $(jq -r --arg p "$pbf" '.[] | select(.pbf == $p) | .id' scripts/cities.json); do
               bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
               osmium extract -b "$bbox" "$file" -o "work/$id.pbf" --overwrite
@@ -37,7 +43,7 @@ jobs:
             done
             rm -f "$file"
           done
-          node -e "const c=require('./scripts/cities.json');const fs=require('fs');const list=c.map(({pbf,...x})=>{const p=JSON.parse(fs.readFileSync('public/packs/'+x.id+'.json'));return {...x,count:p.count,builtAt:p.builtAt,bytes:fs.statSync('public/packs/'+x.id+'.json').size}});fs.writeFileSync('public/packs/index.json',JSON.stringify(list,null,1))"
+          node -e "const c=require('./scripts/cities.json');const fs=require('fs');const list=c.filter(x=>fs.existsSync('public/packs/'+x.id+'.json')).map(({pbf,...x})=>{const p=JSON.parse(fs.readFileSync('public/packs/'+x.id+'.json'));return {...x,count:p.count,builtAt:p.builtAt,bytes:fs.statSync('public/packs/'+x.id+'.json').size}});fs.writeFileSync('public/packs/index.json',JSON.stringify(list,null,1))"
           ls -la public/packs
       - name: Commit packs
         run: |
