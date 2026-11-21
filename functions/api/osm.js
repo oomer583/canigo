@@ -23,6 +23,7 @@ export async function onRequestGet({ request, waitUntil }) {
   if (hit) return hit
 
   const q = `[out:json][timeout:15];(nwr(around:${r},${lat},${lng})["name"];node(around:${r},${lat},${lng})["entrance"];node(around:${r},${lat},${lng})["door"];);out center tags meta;`
+  const tried = []
   for (const mirror of MIRRORS) {
     try {
       const res = await fetch(mirror, {
@@ -31,16 +32,19 @@ export async function onRequestGet({ request, waitUntil }) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'CanIGo (https://github.com/oomer583/canigo)' },
         signal: AbortSignal.timeout(12000)
       })
-      if (!res.ok) continue
+      if (!res.ok) {
+        tried.push(`${mirror}: HTTP ${res.status}`)
+        continue
+      }
       const body = await res.text()
       const out = new Response(body, {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' }
       })
       waitUntil(cache.put(key, out.clone()))
       return out
-    } catch {
-      // try the next mirror
+    } catch (err) {
+      tried.push(`${mirror}: ${err.name}`)
     }
   }
-  return Response.json({ error: 'OpenStreetMap is not reachable right now' }, { status: 502 })
+  return Response.json({ error: 'OpenStreetMap is not reachable right now', tried }, { status: 502 })
 }
