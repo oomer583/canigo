@@ -18,7 +18,11 @@ export function detectCategory(query) {
   return CATEGORIES.find((c) => c.words.some((w) => norm(w) === q)) || null
 }
 
+// Amsterdam "coffeeshops" sell cannabis; never list them as coffee.
+const CANNABIS = /cannabis|marihuana|marijuana|coffeeshop/i
+
 export function inCategory(place, category) {
   const c = place.category ? String(place.category).toLowerCase() : ''
-  return category.tags.some((t) => c === t || c.includes(t))
+  if (CANNABIS.test(c) || CANNABIS.test(place.shop || '') || CANNABIS.test(place.name || '')) return false
+  return category.tags.includes(c)
 }

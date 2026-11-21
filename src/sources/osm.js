@@ -54,6 +54,7 @@ export function parseOverpass(elements = []) {
       id: `osm-${el.type}-${el.id}`,
       name: tags.name,
       category: tags.amenity || tags.shop || tags.tourism || null,
+      shop: tags.shop || null,
       phone: tags.phone || tags['contact:phone'] || null,
       lat: at.lat,
       lng: at.lng,

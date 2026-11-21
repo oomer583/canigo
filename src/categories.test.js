@@ -14,6 +14,9 @@ describe('categories', () => {
   it('matches OSM categories', () => {
     expect(inCategory({ category: 'cafe' }, CATEGORIES[0])).toBe(true)
     expect(inCategory({ category: 'bank' }, CATEGORIES[0])).toBe(false)
+    expect(inCategory({ category: 'cafe', shop: 'cannabis', name: 'X' }, CATEGORIES[0])).toBe(false)
+    expect(inCategory({ category: 'coffeeshop', name: 'Y' }, CATEGORIES[0])).toBe(false)
+    expect(inCategory({ category: 'cafe', name: 'Coffeeshop Rock-it' }, CATEGORIES[0])).toBe(false)
   })
   it('puts places you can enter first, then nearest', () => {
     const at = { lat: 52, lng: 4 }
