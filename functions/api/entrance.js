@@ -4,7 +4,8 @@
 // The Mapillary token stays on the server (secret MAPILLARY_TOKEN).
 // Photos: Mapillary, CC BY-SA 4.0. Answers are cached for a week.
 
-const MODEL = '@cf/llava-hf/llava-1.5-7b-hf'
+// Vision models on Workers AI, tried in order. Models get retired; keep a fallback.
+const MODELS = ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-4-scout-17b-16e-instruct']
 const PROMPT =
   'This is a street photo near a building entrance. Look only at the entrance door of the building. ' +
   'Answer in exactly three lines:\n' +
@@ -40,6 +41,43 @@ export function parseAnswer(text = '') {
   return { steps: pick('STEPS'), ramp: pick('RAMP'), note }
 }
 
+function toBase64(bytes) {
+  let bin = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return btoa(bin)
+}
+
+function textOf(out) {
+  if (!out) return ''
+  if (typeof out.response === 'string') return out.response
+  if (out.choices?.[0]?.message?.content) return out.choices[0].message.content
+  return out.description || ''
+}
+
+async function readEntrance(env, bytes) {
+  const dataUrl = `data:image/jpeg;base64,${toBase64(bytes)}`
+  const messages = [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: PROMPT },
+        { type: 'image_url', image_url: { url: dataUrl } }
+      ]
+    }
+  ]
+  let lastError = null
+  for (const model of MODELS) {
+    try {
+      const out = await env.AI.run(model, { messages, max_tokens: 150 })
+      const text = textOf(out)
+      if (text) return { ...parseAnswer(text), model }
+    } catch (err) {
+      lastError = err
+    }
+  }
+  return { error: lastError?.message || 'no model answered' }
+}
+
 export async function onRequestGet({ request, env, waitUntil }) {
   const url = new URL(request.url)
   const place = { lat: Number(url.searchParams.get('lat')), lng: Number(url.searchParams.get('lng')) }
@@ -47,7 +85,7 @@ export async function onRequestGet({ request, env, waitUntil }) {
   if (!env.MAPILLARY_TOKEN) return Response.json({ error: 'not-configured' }, { status: 503 })
 
   const cache = caches.default
-  const key = new Request(`https://canigo-cache/entrance?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
+  const key = new Request(`https://canigo-cache/entrance/v2?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
   const hit = await cache.match(key)
   if (hit) return hit
 
@@ -85,8 +123,7 @@ export async function onRequestGet({ request, env, waitUntil }) {
     if (env.AI) {
       try {
         const bytes = new Uint8Array(await (await fetch(img.thumb_1024_url, { signal: AbortSignal.timeout(8000) })).arrayBuffer())
-        const out = await env.AI.run(MODEL, { image: [...bytes], prompt: PROMPT, max_tokens: 120 })
-        ai = parseAnswer(out.description || out.response || '')
+        ai = await readEntrance(env, bytes)
       } catch (err) {
         ai = { error: err.message }
       }
@@ -94,7 +131,9 @@ export async function onRequestGet({ request, env, waitUntil }) {
     body = { photo, ai }
   }
 
-  const out = Response.json(body, { headers: { 'Cache-Control': 'public, max-age=604800' } })
-  waitUntil(cache.put(key, out.clone()))
+  // Cache only complete answers, so a temporary AI failure is retried next time.
+  const complete = !body.photo || (body.ai && !body.ai.error)
+  const out = Response.json(body, { headers: { 'Cache-Control': complete ? 'public, max-age=604800' : 'no-store' } })
+  if (complete) waitUntil(cache.put(key, out.clone()))
   return out
 }

@@ -51,7 +51,7 @@ Get a free token by creating an organization and an API client at accessibility.
 
 - Map tiles, search and entrance data: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), via Nominatim and Overpass
 - Street photos: [Mapillary](https://www.mapillary.com), CC BY-SA 4.0, credited to each photographer
-- Image reading: Cloudflare Workers AI (LLaVA 1.5)
+- Image reading: Cloudflare Workers AI (Gemma 4, with Llama 4 Scout as fallback)
 - Accessibility data: [accessibility.cloud](https://www.accessibility.cloud) by Sozialhelden e.V. and its partner sources
 
 ## License
