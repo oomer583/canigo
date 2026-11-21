@@ -28,9 +28,12 @@ export async function findNearby(category, at, { city, profile, radius = 1200, s
 export function currentPosition(timeoutMs = 8000) {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null)
+    // The browser's own timeout does not run while the permission prompt is open.
+    const timer = setTimeout(() => resolve(null), timeoutMs + 4000)
+    const done = (v) => { clearTimeout(timer); resolve(v) }
     navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => resolve(null),
+      (p) => done({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => done(null),
       { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 60000 }
     )
   })
