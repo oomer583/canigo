@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { placesNear, hasToken } from './sources/accessibilityCloud.js'
+import { osmNear } from './sources/osm.js'
 import { forProfile } from './verdict.js'
 import { search, distanceMeters } from './geocode.js'
 import { mergePlaces, nameKey } from './merge.js'
@@ -141,14 +142,32 @@ export default function App() {
         setState('error')
         return
       }
-      let groups = []
-      if (hasToken) {
-        const found = await placesNear(target.lat, target.lng, 80, ctrl.signal)
-        groups = mergePlaces(found)
-      }
+      const [ac, osm] = await Promise.allSettled([
+        hasToken ? placesNear(target.lat, target.lng, 80, ctrl.signal) : Promise.resolve([]),
+        osmNear(target.lat, target.lng, 60, ctrl.signal)
+      ])
+      if (ctrl.signal.aborted) return
+      const acPlaces = ac.status === 'fulfilled' ? ac.value : []
+      const osmData = osm.status === 'fulfilled' ? osm.value : { places: [], entrances: [] }
+      const groups = mergePlaces([...osmData.places, ...acPlaces])
       const match = matchPlace(groups, target)
       const records = match ? [...match.records] : []
-      if (target.osmWheelchair && OSM_STATUS[target.osmWheelchair]) {
+      const at = match || target
+      const entrance = osmData.entrances
+        .filter((e) => distanceMeters(e, at) <= 30 && (e.doorWidthCm != null || e.steps != null || e.status !== 'unknown' || e.detail))
+        .sort((a, b) => (b.main - a.main) || distanceMeters(a, at) - distanceMeters(b, at))[0]
+      if (entrance) {
+        records.push({
+          source: entrance.main ? 'OpenStreetMap (main entrance)' : 'OpenStreetMap (entrance)',
+          sourceUrl: entrance.url,
+          status: entrance.status,
+          detail: entrance.detail,
+          doorWidthCm: entrance.doorWidthCm,
+          steps: entrance.steps,
+          updatedAt: entrance.updatedAt
+        })
+      }
+      if (osm.status !== 'fulfilled' && target.osmWheelchair && OSM_STATUS[target.osmWheelchair]) {
         records.push({ source: 'OpenStreetMap', sourceUrl: 'https://www.openstreetmap.org', status: OSM_STATUS[target.osmWheelchair], detail: null, updatedAt: null, doorWidthCm: null, steps: null })
       }
       setPlace({

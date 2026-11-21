@@ -10,13 +10,16 @@ Built for [Arbiter Hacks V1](https://arbiter-hacks-v1.devpost.com/) (General Tra
 
 Maps tell you how long the bus takes. They rarely tell you whether there are three steps at the door. The data exists in scattered places (OpenStreetMap tags, Wheelmap, city open data, street-level photos), but nobody puts it in front of you at the moment you decide whether to go.
 
-## How it works (v0.1)
+## How it works
 
-1. Pick how you get around (wheelchair, walker, stroller, wide wheelchair...)
+1. Pick how you get around: manual, power or wide wheelchair, walker or gait trainer, stroller, crutches, or "steps are hard for me".
 2. Type where you want to go.
-2. CanIGo asks [accessibility.cloud](https://www.accessibility.cloud) for places within 150 m. accessibility.cloud bundles Wheelmap, OpenStreetMap and 150+ other sources.
-3. Each place gets a clear answer: **You can get in**, **Partly accessible**, **Steps at the entrance**, or **Not known yet**, with the source linked.
-4. One tap opens directions in Google Maps.
+3. CanIGo asks two sources at once:
+   - [accessibility.cloud](https://www.accessibility.cloud), which bundles Wheelmap and 150+ other datasets
+   - [OpenStreetMap](https://www.openstreetmap.org) via the Overpass API, including entrance details (door width, step count) and the date each entry was last edited
+4. It merges duplicate listings of the same place and gives one answer for **you**: a door narrower than you need, or more steps than you can manage, turns the answer red.
+5. If sources disagree, CanIGo says so instead of guessing, and shows every source with its date.
+6. If the answer is unclear, "Ask them before you go" gives you a ready message with your measurements, plus the place's phone number when known.
 
 ## Roadmap
 
@@ -24,7 +27,7 @@ Maps tell you how long the bus takes. They rarely tell you whether there are thr
 - [x] "How do you get around?" profiles: doors and steps checked against what you need
 - [x] Same place from two sources merged, disagreements shown
 - [x] "Ask them before you go": a ready message with your measurements
-- [ ] OpenStreetMap `wheelchair=*` tags directly (Overpass API)
+- [x] OpenStreetMap directly (Overpass API): wheelchair tags, entrance door width and steps, edit dates
 - [ ] Street-level photos (Mapillary, Panoramax) with an AI check for steps and ramps
 - [ ] Project Sidewalk curb ramps (CC0)
 - [ ] User reports: "I was there, it has a ramp"
@@ -44,7 +47,7 @@ Get a free token by creating an organization and an API client at accessibility.
 
 ## Data and credits
 
-- Map tiles and search: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), Nominatim
+- Map tiles, search and entrance data: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), via Nominatim and Overpass
 - Accessibility data: [accessibility.cloud](https://www.accessibility.cloud) by Sozialhelden e.V. and its partner sources
 
 ## License

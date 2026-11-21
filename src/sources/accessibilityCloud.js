@@ -35,7 +35,8 @@ export function toCm(length) {
   const m = String(length).trim().match(/^([\d.,]+)\s*(cm|mm|m)?$/i)
   if (!m) return null
   const v = parseFloat(m[1].replace(',', '.'))
-  const unit = (m[2] || 'cm').toLowerCase()
+  // No unit: OpenStreetMap uses metres (0.8), other sources centimetres (80).
+  const unit = (m[2] || (v < 10 ? 'm' : 'cm')).toLowerCase()
   return Math.round(unit === 'm' ? v * 100 : unit === 'mm' ? v / 10 : v)
 }
 
