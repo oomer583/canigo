@@ -8,13 +8,14 @@
 // Llama 4 Scout answers reliably; Gemma 4 returned nothing in tests, so it is only a fallback.
 const MODELS = ['@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/google/gemma-4-26b-a4b-it']
 const PROMPT =
-  'This is a street photo near a building entrance. Look only at the entrance door of the building. ' +
-  'Answer in exactly three lines:\n' +
-  'STEPS: yes, no, or unclear (are there steps up to the door?)\n' +
-  'RAMP: yes, no, or unclear (is there a ramp?)\n' +
+  'This is a street photo near a building. First decide if a building entrance door is clearly visible. ' +
+  'Answer in exactly four lines:\n' +
+  'DOOR: yes or no (is an entrance door clearly visible?)\n' +
+  'STEPS: yes, no, or unclear (are there steps up to that door?)\n' +
+  'RAMP: yes, no, or unclear (is there a ramp to that door?)\n' +
   'NOTE: one short sentence describing the entrance.\n' +
-  'Rules: if the door is level with the pavement and you see no step, answer STEPS: no. ' +
-  'Answer unclear only if you cannot see the entrance door. The NOTE must agree with STEPS and RAMP.'
+  'Rules: if DOOR is no, answer unclear for STEPS and RAMP. If the door is level with the pavement and you see no step, answer STEPS: no. ' +
+  'The NOTE must agree with the other lines. Do not guess what you cannot see.'
 
 function bearing(from, to) {
   const toRad = (d) => (d * Math.PI) / 180
@@ -41,7 +42,11 @@ export function parseAnswer(text = '') {
     return m ? m[1].toLowerCase() : 'unclear'
   }
   const note = (text.match(/NOTE\s*:\s*(.+)/i) || [])[1]?.trim() || null
-  return { steps: pick('STEPS'), ramp: pick('RAMP'), note }
+  const doorMatch = text.match(/DOOR\s*:\s*(yes|no)/i)
+  const door = doorMatch ? doorMatch[1].toLowerCase() : 'unclear'
+  // No visible door: whatever the model said about steps is a guess.
+  if (door === 'no') return { door, steps: 'unclear', ramp: 'unclear', note }
+  return { door, steps: pick('STEPS'), ramp: pick('RAMP'), note }
 }
 
 function toBase64(bytes) {
@@ -71,7 +76,7 @@ async function readEntrance(env, bytes) {
   let lastError = null
   for (const model of MODELS) {
     try {
-      const out = await env.AI.run(model, { messages, max_tokens: 150 })
+      const out = await env.AI.run(model, { messages, max_tokens: 180 })
       const text = textOf(out)
       if (text) return { ...parseAnswer(text), model }
     } catch (err) {
@@ -88,7 +93,7 @@ export async function onRequestGet({ request, env, waitUntil }) {
   if (!env.MAPILLARY_TOKEN) return Response.json({ error: 'not-configured' }, { status: 503 })
 
   const cache = caches.default
-  const key = new Request(`https://canigo-cache/entrance/v3?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
+  const key = new Request(`https://canigo-cache/entrance/v4?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
   const hit = await cache.match(key)
   if (hit) return hit
 

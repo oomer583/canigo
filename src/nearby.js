@@ -1,0 +1,37 @@
+// Places of one kind near the user, best fit for their profile first.
+import { placesNear, hasToken } from './sources/accessibilityCloud.js'
+import { loadPack, packNear, inside } from './sources/cityPack.js'
+import { mergePlaces } from './merge.js'
+import { forProfile } from './verdict.js'
+import { distanceMeters } from './geocode.js'
+import { inCategory } from './categories.js'
+
+const RANK = { yes: 0, partial: 1, unknown: 2, no: 3 }
+
+export function rankPlaces(groups, at, profile) {
+  return groups
+    .map((g) => ({ ...g, verdict: forProfile(g.records, profile), distance: Math.round(distanceMeters(g, at)) }))
+    .sort((a, b) => RANK[a.verdict.tone] - RANK[b.verdict.tone] || a.distance - b.distance)
+}
+
+export async function findNearby(category, at, { city, profile, radius = 1200, signal } = {}) {
+  const [pack, ac] = await Promise.allSettled([
+    city && inside(city, at.lat, at.lng) ? loadPack(city.id).then((p) => packNear(p, at.lat, at.lng, radius).places) : Promise.resolve([]),
+    hasToken ? placesNear(at.lat, at.lng, Math.min(radius, 1000), signal) : Promise.resolve([])
+  ])
+  const all = [...(pack.status === 'fulfilled' ? pack.value : []), ...(ac.status === 'fulfilled' ? ac.value : [])]
+  const groups = mergePlaces(all.filter((p) => inCategory(p, category)))
+  return rankPlaces(groups, at, profile).slice(0, 25)
+}
+
+// The user's position, or null if they say no or it takes too long.
+export function currentPosition(timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 60000 }
+    )
+  })
+}

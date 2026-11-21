@@ -2,7 +2,7 @@
 // through our own server function (functions/api/entrance.js).
 
 export function recordFromPhoto(result) {
-  if (!result?.photo || !result.ai || result.ai.error) return null
+  if (!result?.photo || !result.ai || result.ai.error || result.ai.door === 'no') return null
   const { steps, ramp, note } = result.ai
   let status = 'unknown'
   if (steps === 'yes' && ramp !== 'yes') status = 'no'

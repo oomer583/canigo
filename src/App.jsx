@@ -8,6 +8,9 @@ import { forProfile } from './verdict.js'
 import { search, distanceMeters } from './geocode.js'
 import { mergePlaces, nameKey } from './merge.js'
 import { PROFILES, loadProfile, saveProfile } from './profiles.js'
+import { askText, LANGS, defaultLang } from './ask.js'
+import { CATEGORIES, detectCategory } from './categories.js'
+import { findNearby, currentPosition } from './nearby.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
 const OSM_STATUS = { yes: 'yes', limited: 'partial', no: 'no' }
@@ -76,16 +79,13 @@ function matchPlace(groups, target) {
   return pool.sort((a, b) => distanceMeters(a, target) - distanceMeters(b, target))[0] || null
 }
 
-function askText(profile, placeName) {
-  const steps = profile.steps === 0 ? 'I cannot use steps' : `I can manage up to ${profile.steps} step${profile.steps > 1 ? 's' : ''}`
-  return `Hello! I would like to visit ${placeName}. I use a ${profile.label.toLowerCase()} and need a door at least ${profile.widthCm} cm wide. ${steps}. Is your entrance step-free, and how wide is the door? Thank you!`
-}
 
-function Answer({ place, profile, photo }) {
+function Answer({ place, profile, photo, city }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
+  const [lang, setLang] = useState(() => defaultLang(city))
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
-  const question = askText(profile, place.name)
+  const question = askText(profile, place.name, lang)
   async function copy() {
     try {
       await navigator.clipboard.writeText(question)
@@ -127,7 +127,10 @@ function Answer({ place, profile, photo }) {
         <figure className="photo">
           <img src={photo.photo.url} alt={`Street photo near ${place.name}`} loading="lazy" />
           <figcaption>
-            {photo.ai && !photo.ai.error && (
+            {photo.ai && !photo.ai.error && photo.ai.door === 'no' && (
+              <span className="ai">AI could not see the entrance in this photo.</span>
+            )}
+            {photo.ai && !photo.ai.error && photo.ai.door !== 'no' && (
               <span className="ai">
                 AI reading: steps {photo.ai.steps}, ramp {photo.ai.ramp}.{photo.ai.note ? ` ${photo.ai.note}` : ''}
               </span>
@@ -144,7 +147,14 @@ function Answer({ place, profile, photo }) {
         {(v.tone !== 'yes' || v.conflict) && (
           <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
             <summary>Ask them before you go</summary>
-            <p className="question">{question}</p>
+            <div className="langs" role="group" aria-label="Message language">
+              {LANGS.map((l) => (
+                <button key={l.id} className={l.id === lang ? 'lang on' : 'lang'} onClick={() => { setLang(l.id); setCopied(false) }}>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+            <p className="question" lang={lang}>{question}</p>
             <div className="ask-actions">
               <button onClick={copy}>{copied ? 'Copied' : 'Copy message'}</button>
               {place.phone && <a className="button ghost" href={`tel:${place.phone.replace(/\s/g, '')}`}>Call {place.phone}</a>}
@@ -167,7 +177,75 @@ export default function App() {
   const [place, setPlace] = useState(null)
   const [nearby, setNearby] = useState([])
   const [photo, setPhoto] = useState(null)
+  const [list, setList] = useState(null) // { category, items, note } for "coffee near me"
   const abortRef = useRef(null)
+
+  function loadPhoto(at, ctrl) {
+    setPhoto('loading')
+    entrancePhoto(at.lat, at.lng, ctrl.signal)
+      .then((result) => {
+        if (ctrl.signal.aborted) return
+        setPhoto(result)
+        const rec = recordFromPhoto(result)
+        if (rec) setPlace((p) => (p ? { ...p, records: [...p.records, rec] } : p))
+      })
+      .catch(() => !ctrl.signal.aborted && setPhoto(null))
+  }
+
+  function freshRequest() {
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+    return ctrl
+  }
+
+  async function runCategory(category) {
+    const ctrl = freshRequest()
+    setQuery(category.label)
+    setState('loading')
+    setPlace(null)
+    setPhoto(null)
+    setList(null)
+    let at = await currentPosition()
+    let note = ''
+    if (!at && city) {
+      at = { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 }
+      note = `Showing places near the centre of ${city.name}. Allow location to see places near you.`
+    }
+    if (!at) {
+      setError('Allow location, or choose your city, to find places near you.')
+      setState('error')
+      return
+    }
+    try {
+      const items = await findNearby(category, at, { city, profile, signal: ctrl.signal })
+      if (ctrl.signal.aborted) return
+      setList({ category, items, note })
+      setState('list')
+    } catch (err) {
+      if (err.name === 'AbortError') return
+      setError(err.message)
+      setState('error')
+    }
+  }
+
+  function openFromList(item) {
+    const ctrl = freshRequest()
+    setPlace({ name: item.name, lat: item.lat, lng: item.lng, phone: item.phone, records: [...item.records], fromList: true })
+    setNearby(list.items.filter((i) => i.id !== item.id))
+    setState('done')
+    loadPhoto(item, ctrl)
+  }
+
+  function startOver() {
+    try {
+      localStorage.removeItem('canigo.profile')
+      localStorage.removeItem('canigo.city')
+    } catch {
+      // nothing saved
+    }
+    location.reload()
+  }
 
   function pick(p) {
     const first = !profile
@@ -191,9 +269,10 @@ export default function App() {
   async function onSearch(e) {
     e.preventDefault()
     if (!query.trim()) return
-    abortRef.current?.abort()
-    const ctrl = new AbortController()
-    abortRef.current = ctrl
+    const category = detectCategory(query)
+    if (category) return runCategory(category)
+    const ctrl = freshRequest()
+    setList(null)
     setState('loading')
     setPlace(null)
     setPhoto(null)
@@ -247,16 +326,7 @@ export default function App() {
       })
       setNearby(groups.filter((g) => g !== match))
       setState('done')
-      setPhoto('loading')
-      const at2 = { lat: match?.lat ?? target.lat, lng: match?.lng ?? target.lng }
-      entrancePhoto(at2.lat, at2.lng, ctrl.signal)
-        .then((result) => {
-          if (ctrl.signal.aborted) return
-          setPhoto(result)
-          const rec = recordFromPhoto(result)
-          if (rec) setPlace((p) => (p ? { ...p, records: [...p.records, rec] } : p))
-        })
-        .catch(() => !ctrl.signal.aborted && setPhoto(null))
+      loadPhoto({ lat: match?.lat ?? target.lat, lng: match?.lng ?? target.lng }, ctrl)
     } catch (err) {
       if (err.name === 'AbortError') return
       setError(err.message)
@@ -295,14 +365,47 @@ export default function App() {
               <input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Rijksmuseum Amsterdam" autoComplete="off" />
               <button type="submit">Check</button>
             </div>
+            <div className="needs" role="group" aria-label="Find places near you">
+              {CATEGORIES.map((c) => (
+                <button type="button" key={c.id} className="need" onClick={() => runCategory(c)}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </form>
 
           <section aria-live="polite">
             {!hasToken && <p className="warn">Developer note: add your accessibility.cloud token to <code>.env</code>.</p>}
-            {state === 'idle' && <p className="hint">Type the name of a café, shop, museum or office. CanIGo tells you if its entrance works for you.</p>}
+            {state === 'idle' && <p className="hint">Type a place name, or tap what you need. CanIGo tells you if the entrance works for you.</p>}
             {state === 'loading' && <p className="hint">Checking the entrance…</p>}
             {state === 'error' && <p className="warn">{error}</p>}
-            {state === 'done' && place && <Answer place={place} profile={profile} photo={photo} />}
+            {state === 'list' && list && (
+              <div className="list">
+                <h2>{list.category.label} near you</h2>
+                {list.note && <p className="hint small">{list.note}</p>}
+                {list.items.length === 0 && (
+                  <p className="hint">No {list.category.label.toLowerCase()} places with entrance information nearby yet. Places nobody has checked are not shown.</p>
+                )}
+                <ul>
+                  {list.items.map((i) => (
+                    <li key={i.id}>
+                      <button className="row-item" onClick={() => openFromList(i)}>
+                        <span className="dot" style={{ background: COLORS[i.verdict.tone] }} aria-hidden="true" />
+                        <span className="row-text">
+                          <strong>{i.name}</strong>
+                          <span>{i.verdict.title} · {i.distance < 1000 ? `${i.distance} m` : `${(i.distance / 1000).toFixed(1)} km`}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="hint small">Only places with entrance information are listed.</p>
+              </div>
+            )}
+            {state === 'done' && place?.fromList && list && (
+              <button className="button ghost back" onClick={() => { setState('list'); setPlace(null) }}>← Back to {list.category.label.toLowerCase()} list</button>
+            )}
+            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} />}
           </section>
 
           {state === 'done' && place && (
@@ -320,6 +423,9 @@ export default function App() {
               </MapContainer>
             </div>
           )}
+          <footer className="foot">
+            <button className="link" onClick={startOver}>Start over</button>
+          </footer>
         </main>
       )}
     </div>
