@@ -22,7 +22,7 @@ describe('parseOverpass', () => {
     ])
     expect(places).toHaveLength(1)
     expect(places[0].record.status).toBe('partial')
-    expect(places[0].record.updatedAt).toBe('2024-05-01T10:00:00Z')
+    expect(places[0].record.updatedAt).toBe('2024-05-01T10:00:00.000Z')
     expect(places[0].record.sourceUrl).toBe('https://www.openstreetmap.org/node/1')
     expect(entrances).toHaveLength(1)
     expect(entrances[0].doorWidthCm).toBe(90)

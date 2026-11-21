@@ -16,6 +16,13 @@ function point(el) {
   return null
 }
 
+// Overpass gives ISO strings; osmium exports epoch seconds. Always return ISO or null.
+export function isoTime(t) {
+  if (t == null || t === '') return null
+  const d = typeof t === 'number' ? new Date(t < 1e12 ? t * 1000 : t) : new Date(t)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 export function entranceFromTags(tags = {}) {
   const doorWidthCm = toCm(tags['door:width'] ?? tags['width'] ?? tags['entrance:width'])
   let steps = null
@@ -36,7 +43,7 @@ export function parseOverpass(elements = []) {
     const at = point(el)
     if (!at) continue
     const tags = el.tags || {}
-    const updatedAt = el.timestamp || null
+    const updatedAt = isoTime(el.timestamp)
     if (tags.entrance || tags.door) {
       entrances.push({ ...at, ...entranceFromTags(tags), updatedAt, url: osmUrl(el) })
       continue

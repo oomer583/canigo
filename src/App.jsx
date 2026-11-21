@@ -117,7 +117,7 @@ function Answer({ place, profile, photo }) {
             <li key={i}>
               <span className="dot" style={{ background: COLORS[r.status] }} aria-hidden="true" />{' '}
               <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.source}</a>
-              {r.updatedAt ? `, ${r.updatedAt.slice(0, 10)}` : ''}
+              {r.updatedAt ? `, ${String(r.updatedAt).slice(0, 10)}` : ''}
             </li>
           ))}
         </ul>

@@ -4,6 +4,7 @@
 // so src/sources/osm.js can read it with parseOverpass().
 // Data © OpenStreetMap contributors, ODbL.
 import { readFileSync, writeFileSync } from 'node:fs'
+import { isoTime } from '../src/sources/osm.js'
 
 const KEEP = [
   'name', 'wheelchair', 'wheelchair:description', 'entrance', 'door', 'door:width', 'width', 'entrance:width',
@@ -27,7 +28,7 @@ export function toElement(feature) {
   if (!useful) return null
   const type = p['@type'] || 'node'
   const at = centre(feature.geometry)
-  const el = { type, id: p['@id'], tags, timestamp: p['@timestamp'] || null }
+  const el = { type, id: p['@id'], tags, timestamp: isoTime(p['@timestamp']) }
   if (type === 'node') Object.assign(el, at)
   else el.center = at
   return el

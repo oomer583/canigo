@@ -37,3 +37,10 @@ describe('city packs', () => {
     expect(centre({ coordinates: [4, 52] })).toEqual({ lat: 52, lon: 4 })
   })
 })
+
+describe('timestamps', () => {
+  it('turns osmium epoch seconds into ISO dates', () => {
+    const pack = { elements: [{ type: 'node', id: 1, lat: 52, lon: 4, tags: { name: 'A', wheelchair: 'yes' }, timestamp: 1714521600 }] }
+    expect(packNear(pack, 52, 4).places[0].record.updatedAt).toBe('2024-05-01T00:00:00.000Z')
+  })
+})
