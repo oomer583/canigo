@@ -1,10 +1,10 @@
 // Places of one kind near the user, best fit for their profile first.
 import { placesNear, hasToken } from './sources/accessibilityCloud.js'
 import { loadPack, packNear, inside } from './sources/cityPack.js'
-import { mergePlaces } from './merge.js'
 import { forProfile } from './verdict.js'
 import { distanceMeters } from './geocode.js'
-import { inCategory } from './categories.js'
+import { inCategory, isCannabis } from './categories.js'
+import { mergePlaces, nameKey } from './merge.js'
 
 const RANK = { yes: 0, partial: 1, unknown: 2, no: 3 }
 
@@ -20,7 +20,9 @@ export async function findNearby(category, at, { city, profile, radius = 1200, s
     hasToken ? placesNear(at.lat, at.lng, Math.min(radius, 1000), signal) : Promise.resolve([])
   ])
   const all = [...(pack.status === 'fulfilled' ? pack.value : []), ...(ac.status === 'fulfilled' ? ac.value : [])]
-  const groups = mergePlaces(all.filter((p) => inCategory(p, category)))
+  // A place another source marks as a cannabis shop is dropped from every source.
+  const banned = new Set(all.filter(isCannabis).map((p) => nameKey(p.name)))
+  const groups = mergePlaces(all.filter((p) => inCategory(p, category) && !banned.has(nameKey(p.name))))
   return rankPlaces(groups, at, profile).slice(0, 25)
 }
 

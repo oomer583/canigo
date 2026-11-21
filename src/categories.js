@@ -21,8 +21,12 @@ export function detectCategory(query) {
 // Amsterdam "coffeeshops" sell cannabis; never list them as coffee.
 const CANNABIS = /cannabis|marihuana|marijuana|coffeeshop/i
 
+export function isCannabis(place) {
+  return CANNABIS.test(String(place.category || '')) || CANNABIS.test(place.shop || '') || CANNABIS.test(place.name || '')
+}
+
 export function inCategory(place, category) {
+  if (isCannabis(place)) return false
   const c = place.category ? String(place.category).toLowerCase() : ''
-  if (CANNABIS.test(c) || CANNABIS.test(place.shop || '') || CANNABIS.test(place.name || '')) return false
   return category.tags.includes(c)
 }
