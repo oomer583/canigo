@@ -37,4 +37,10 @@ describe('forProfile', () => {
     expect(forProfile(records, stroller).tone).toBe('yes')
     expect(forProfile(records, wheelchair).tone).toBe('no')
   })
+
+  it('says sources disagree when they conflict and none is dated', () => {
+    const out = forProfile([r('yes'), r('no')], wheelchair)
+    expect(out.tone).toBe('partial')
+    expect(out.title).toBe('Sources disagree')
+  })
 })

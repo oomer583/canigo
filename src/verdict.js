@@ -34,6 +34,12 @@ export function combine(records) {
 export function forProfile(records, profile) {
   const base = combine(records)
   const out = { ...base, tone: base.status, title: STATUS[base.status].label, reasons: [] }
+  // Sources disagree and none is dated: do not pretend to know which is right.
+  if (base.conflict && !base.headline?.updatedAt) {
+    out.tone = 'partial'
+    out.title = 'Sources disagree'
+    out.undated = true
+  }
   if (!profile) return out
 
   const door = records.map((r) => r.doorWidthCm).find((v) => typeof v === 'number')

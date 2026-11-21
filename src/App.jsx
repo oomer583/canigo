@@ -76,7 +76,11 @@ function Answer({ place, profile }) {
         <p key={r} className="detail">{r}</p>
       ))}
       {v.headline?.detail && <p className="detail">{v.headline.detail}</p>}
-      {v.conflict && <p className="conflict">Sources disagree. The newest one leads; check the others below.</p>}
+      {v.conflict && (
+        <p className="conflict">
+          {v.undated ? 'Some sources say yes, some say no, and none is dated. Ask them before you go.' : 'Sources disagree. The newest one leads; check the others below.'}
+        </p>
+      )}
       {v.status === 'unknown' && <p className="detail">No source has checked this entrance yet.</p>}
       {place.records.length > 0 && (
         <ul className="sources">
@@ -91,8 +95,8 @@ function Answer({ place, profile }) {
       )}
       <div className="actions">
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
-        {(v.status !== 'yes' || v.tone !== 'yes') && (
-          <details className="ask">
+        {(v.tone !== 'yes' || v.conflict) && (
+          <details className="ask" open={v.conflict || v.status === 'unknown'}>
             <summary>Ask them before you go</summary>
             <p className="question">{question}</p>
             <div className="ask-actions">
