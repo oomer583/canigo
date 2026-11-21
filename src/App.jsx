@@ -209,7 +209,6 @@ export default function App() {
     let at = inCity ? null : await currentPosition()
     if (at) at.fromGps = true
     let note = ''
-    let away = null
     if (!at && city) {
       at = { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 }
       note = inCity ? `Showing places near the centre of ${city.name}.` : `Showing places near the centre of ${city.name}. Allow location to see places near you.`
@@ -219,18 +218,11 @@ export default function App() {
       setState('error')
       return
     }
-    // The user may be away from their saved city: use whichever city pack covers where they are.
-    let useCity = city
-    if (!note && (!city || !inside(city, at.lat, at.lng))) {
-      const here = (await listCities().catch(() => [])).find((c) => inside(c, at.lat, at.lng))
-      away = city
-      if (here) {
-        useCity = here
-        note = city ? `You are in ${here.name}, not ${city.name}, so CanIGo is using ${here.name} data.` : ''
-      } else {
-        useCity = null
-        note = city ? `You are outside ${city.name}. Only online sources are used here, so the list may be short.` : ''
-      }
+    // The chosen city always wins: away from it, search its centre instead of where the user is.
+    const useCity = city
+    if (city && at.fromGps && !inside(city, at.lat, at.lng)) {
+      at = { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 }
+      note = `You are outside ${city.name}, so this list starts from the centre of ${city.name}.`
     }
     try {
       let items = await findNearby(category, at, { city: useCity, profile, signal: ctrl.signal })
@@ -241,7 +233,7 @@ export default function App() {
         if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${km} km.`].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
-      setList({ category, items, note, away, centre: inCity || !at.fromGps ? null : useCity, nearMe: !inCity })
+      setList({ category, items, note, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
       setState('list')
     } catch (err) {
       if (err.name === 'AbortError') return
@@ -404,15 +396,10 @@ export default function App() {
               <div className="list">
                 <h2>{list.category.label} {list.nearMe ? 'near you' : `in ${city?.name || 'the city centre'}`}</h2>
                 {list.note && <p className="hint small">{list.note}</p>}
-                {list.away && (
-                  <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
-                    Show {list.category.label.toLowerCase()} in {list.away.name} instead
-                  </button>
-                )}
                 {list.items.length === 0 && (
                   <>
                     <p className="hint">No {list.category.label.toLowerCase()} places with entrance information within 25 km yet. Places nobody has checked are not shown.</p>
-                    {list.centre && !list.away && (
+                    {list.centre && (
                       <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
                         Show {list.category.label.toLowerCase()} in central {list.centre.name}
                       </button>
