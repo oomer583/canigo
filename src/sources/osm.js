@@ -4,7 +4,6 @@
 // Data © OpenStreetMap contributors, ODbL.
 import { toCm } from './accessibilityCloud.js'
 
-const ENDPOINT = 'https://overpass-api.de/api/interpreter'
 const STATUS = { yes: 'yes', designated: 'yes', limited: 'partial', no: 'no' }
 
 function osmUrl(el) {
@@ -65,9 +64,10 @@ export function parseOverpass(elements = []) {
   return { places, entrances }
 }
 
+// Goes through our own Cloudflare function (functions/api/osm.js), which runs
+// Overpass server-side with mirrors and a one-day cache.
 export async function osmNear(lat, lng, radiusMeters = 60, signal) {
-  const q = `[out:json][timeout:15];(nwr(around:${radiusMeters},${lat},${lng})["name"];node(around:${radiusMeters},${lat},${lng})["entrance"];node(around:${radiusMeters},${lat},${lng})["door"];);out center tags meta;`
-  const res = await fetch(ENDPOINT, { method: 'POST', body: 'data=' + encodeURIComponent(q), signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+  const res = await fetch(`/api/osm?lat=${lat}&lng=${lng}&r=${radiusMeters}`, { signal })
   if (!res.ok) throw new Error(`OpenStreetMap answered ${res.status}`)
   const data = await res.json()
   return parseOverpass(data.elements)
