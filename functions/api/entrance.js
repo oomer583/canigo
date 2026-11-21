@@ -5,13 +5,16 @@
 // Photos: Mapillary, CC BY-SA 4.0. Answers are cached for a week.
 
 // Vision models on Workers AI, tried in order. Models get retired; keep a fallback.
-const MODELS = ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-4-scout-17b-16e-instruct']
+// Llama 4 Scout answers reliably; Gemma 4 returned nothing in tests, so it is only a fallback.
+const MODELS = ['@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/google/gemma-4-26b-a4b-it']
 const PROMPT =
   'This is a street photo near a building entrance. Look only at the entrance door of the building. ' +
   'Answer in exactly three lines:\n' +
   'STEPS: yes, no, or unclear (are there steps up to the door?)\n' +
   'RAMP: yes, no, or unclear (is there a ramp?)\n' +
-  'NOTE: one short sentence describing the entrance.'
+  'NOTE: one short sentence describing the entrance.\n' +
+  'Rules: if the door is level with the pavement and you see no step, answer STEPS: no. ' +
+  'Answer unclear only if you cannot see the entrance door. The NOTE must agree with STEPS and RAMP.'
 
 function bearing(from, to) {
   const toRad = (d) => (d * Math.PI) / 180
@@ -85,14 +88,14 @@ export async function onRequestGet({ request, env, waitUntil }) {
   if (!env.MAPILLARY_TOKEN) return Response.json({ error: 'not-configured' }, { status: 503 })
 
   const cache = caches.default
-  const key = new Request(`https://canigo-cache/entrance/v2?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
+  const key = new Request(`https://canigo-cache/entrance/v3?lat=${place.lat.toFixed(5)}&lng=${place.lng.toFixed(5)}`)
   const hit = await cache.match(key)
   if (hit) return hit
 
-  // Photos within ~40 m, newest first.
-  const d = 0.0004
+  // Place points are often the middle of the building, so search ~80 m around it.
+  const d = 0.0008
   const bbox = [place.lng - d, place.lat - d, place.lng + d, place.lat + d].join(',')
-  const api = `https://graph.mapillary.com/images?access_token=${env.MAPILLARY_TOKEN}&fields=id,thumb_1024_url,captured_at,compass_angle,computed_compass_angle,geometry,computed_geometry,is_pano,creator&bbox=${bbox}&limit=50`
+  const api = `https://graph.mapillary.com/images?access_token=${env.MAPILLARY_TOKEN}&fields=id,thumb_1024_url,captured_at,compass_angle,computed_compass_angle,geometry,computed_geometry,is_pano,creator&bbox=${bbox}&limit=200`
   const res = await fetch(api, { signal: AbortSignal.timeout(8000) })
   if (!res.ok) return Response.json({ error: `mapillary ${res.status}` }, { status: 502 })
   const { data = [] } = await res.json()
@@ -105,7 +108,7 @@ export async function onRequestGet({ request, env, waitUntil }) {
       const facing = img.computed_compass_angle ?? img.compass_angle
       return { img, dist: meters(at, place), gap: angleGap(facing, bearing(at, place)) }
     })
-    .filter((c) => c.dist >= 4 && c.dist <= 35 && c.gap <= 50)
+    .filter((c) => c.dist >= 4 && c.dist <= 70 && c.gap <= 45)
     .sort((a, b) => a.gap + a.dist - (b.gap + b.dist) || b.img.captured_at - a.img.captured_at)
 
   let body
@@ -132,8 +135,10 @@ export async function onRequestGet({ request, env, waitUntil }) {
   }
 
   // Cache only complete answers, so a temporary AI failure is retried next time.
+  // "No photo" is cached for a day only, since new photos get uploaded.
   const complete = !body.photo || (body.ai && !body.ai.error)
-  const out = Response.json(body, { headers: { 'Cache-Control': complete ? 'public, max-age=604800' : 'no-store' } })
+  const maxAge = body.photo ? 604800 : 86400
+  const out = Response.json(body, { headers: { 'Cache-Control': complete ? `public, max-age=${maxAge}` : 'no-store' } })
   if (complete) waitUntil(cache.put(key, out.clone()))
   return out
 }
