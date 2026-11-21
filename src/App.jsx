@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { placesNear, hasToken } from './sources/accessibilityCloud.js'
 import { osmNear } from './sources/osm.js'
+import { listCities, loadCity, saveCity, loadPack, packNear, inside } from './sources/cityPack.js'
 import { entrancePhoto, recordFromPhoto } from './sources/streetPhoto.js'
 import { forProfile } from './verdict.js'
 import { search, distanceMeters } from './geocode.js'
@@ -33,6 +34,32 @@ function ProfilePicker({ current, onPick }) {
             </span>
           </button>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function CityPicker({ current, onPick }) {
+  const [cities, setCities] = useState(null)
+  useEffect(() => {
+    listCities().then(setCities).catch(() => setCities([]))
+  }, [])
+  return (
+    <div className="picker">
+      <h2>Which city do you live in?</h2>
+      <p>CanIGo saves that city's entrance data on your phone, so answers come fast and work offline. Other places still work online.</p>
+      {cities === null && <p className="hint">Loading cities…</p>}
+      <div className="choices">
+        {(cities || []).map((c) => (
+          <button key={c.id} className={current?.id === c.id ? 'choice on' : 'choice'} onClick={() => onPick(c)}>
+            <strong>{c.name}</strong>
+            <span>{c.country} · {c.count.toLocaleString('en')} places and entrances · {Math.max(1, Math.round(c.bytes / 1e6))} MB</span>
+          </button>
+        ))}
+        <button className="choice" onClick={() => onPick(null)}>
+          <strong>My city is not listed</strong>
+          <span>Use online sources only</span>
+        </button>
       </div>
     </div>
   )
@@ -132,6 +159,8 @@ function Answer({ place, profile, photo }) {
 export default function App() {
   const [profile, setProfile] = useState(() => loadProfile())
   const [picking, setPicking] = useState(() => !loadProfile())
+  const [city, setCity] = useState(() => loadCity())
+  const [pickingCity, setPickingCity] = useState(false)
   const [query, setQuery] = useState('')
   const [state, setState] = useState('idle') // idle | loading | done | error
   const [error, setError] = useState('')
@@ -141,10 +170,23 @@ export default function App() {
   const abortRef = useRef(null)
 
   function pick(p) {
+    const first = !profile
     setProfile(p)
     saveProfile(p)
     setPicking(false)
+    if (first && !city) setPickingCity(true)
   }
+
+  function pickCity(c) {
+    setCity(c)
+    saveCity(c)
+    setPickingCity(false)
+    if (c) loadPack(c.id).catch(() => {})
+  }
+
+  useEffect(() => {
+    if (city) loadPack(city.id).catch(() => {})
+  }, [city])
 
   async function onSearch(e) {
     e.preventDefault()
@@ -164,10 +206,12 @@ export default function App() {
       }
       const [ac, osm] = await Promise.allSettled([
         hasToken ? placesNear(target.lat, target.lng, 80, ctrl.signal) : Promise.resolve([]),
-        Promise.race([
-          osmNear(target.lat, target.lng, 60, ctrl.signal),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('osm-timeout')), 6000))
-        ])
+        city && inside(city, target.lat, target.lng)
+          ? loadPack(city.id).then((pack) => packNear(pack, target.lat, target.lng, 60))
+          : Promise.race([
+              osmNear(target.lat, target.lng, 60, ctrl.signal),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('osm-timeout')), 6000))
+            ])
       ])
       if (ctrl.signal.aborted) return
       const acPlaces = ac.status === 'fulfilled' ? ac.value : []
@@ -226,15 +270,22 @@ export default function App() {
           <h1>CanIGo</h1>
           <p>Know if you can get in, before you go.</p>
         </div>
-        {profile && !picking && (
-          <button className="profile-chip" onClick={() => setPicking(true)}>
-            {profile.label} · change
-          </button>
+        {profile && !picking && !pickingCity && (
+          <div className="chips">
+            <button className="profile-chip" onClick={() => setPicking(true)}>
+              {profile.label} · change
+            </button>
+            <button className="profile-chip" onClick={() => setPickingCity(true)}>
+              {city ? city.name : 'No city'} · change
+            </button>
+          </div>
         )}
       </header>
 
       {picking ? (
         <ProfilePicker current={profile} onPick={pick} />
+      ) : pickingCity ? (
+        <CityPicker current={city} onPick={pickCity} />
       ) : (
         <main className="flow">
           <form onSubmit={onSearch} role="search" className="search">

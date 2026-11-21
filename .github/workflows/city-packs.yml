@@ -1,0 +1,47 @@
+# Builds offline city packs from OpenStreetMap (Geofabrik extracts) once a week.
+# Overpass is not reachable from Cloudflare, so the data is prepared here instead.
+name: City packs
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install osmium
+        run: sudo apt-get update && sudo apt-get install -y osmium-tool jq
+      - name: Build packs
+        run: |
+          set -euo pipefail
+          mkdir -p work public/packs
+          for pbf in $(jq -r '.[].pbf' scripts/cities.json | sort -u); do
+            file="work/$(basename "$pbf")"
+            curl -sSfL --retry 3 -o "$file" "https://download.geofabrik.de/$pbf"
+            for id in $(jq -r --arg p "$pbf" '.[] | select(.pbf == $p) | .id' scripts/cities.json); do
+              bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
+              osmium extract -b "$bbox" "$file" -o "work/$id.pbf" --overwrite
+              osmium tags-filter "work/$id.pbf" nwr/wheelchair nwr/entrance n/door nwr/step_count nwr/ramp -o "work/$id-f.pbf" --overwrite
+              osmium export "work/$id-f.pbf" -f geojsonseq --attributes type,id,timestamp -o "work/$id.geojsonseq" --overwrite
+              node scripts/build-pack.mjs "$id" "work/$id.geojsonseq"
+            done
+            rm -f "$file"
+          done
+          node -e "const c=require('./scripts/cities.json');const fs=require('fs');const list=c.map(({pbf,...x})=>{const p=JSON.parse(fs.readFileSync('public/packs/'+x.id+'.json'));return {...x,count:p.count,builtAt:p.builtAt,bytes:fs.statSync('public/packs/'+x.id+'.json').size}});fs.writeFileSync('public/packs/index.json',JSON.stringify(list,null,1))"
+          ls -la public/packs
+      - name: Commit packs
+        run: |
+          git config user.name "canigo-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/packs
+          git diff --cached --quiet || (git commit -m "Update city packs from OpenStreetMap" && git push)

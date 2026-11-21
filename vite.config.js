@@ -8,6 +8,17 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
+      workbox: {
+        globIgnores: ['packs/**'],
+        runtimeCaching: [
+          {
+            // City packs: keep a copy for offline use, refresh it in the background.
+            urlPattern: ({ url }) => url.pathname.startsWith('/packs/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'city-packs', expiration: { maxEntries: 10 } }
+          }
+        ]
+      },
       manifest: {
         name: 'CanIGo',
         short_name: 'CanIGo',
