@@ -22,7 +22,8 @@ export async function onRequestGet({ request, waitUntil }) {
   const hit = await cache.match(key)
   if (hit) return hit
 
-  const q = `[out:json][timeout:15];(nwr(around:${r},${lat},${lng})["name"];node(around:${r},${lat},${lng})["entrance"];node(around:${r},${lat},${lng})["door"];);out center tags meta;`
+  // Nodes and ways only: relations pull in huge objects (city boundaries) and time out.
+  const q = `[out:json][timeout:10];(node(around:${r},${lat},${lng})["name"];way(around:${r},${lat},${lng})["name"];node(around:${r},${lat},${lng})["entrance"];node(around:${r},${lat},${lng})["door"];);out center tags meta qt;`
   const tried = []
   for (const mirror of MIRRORS) {
     try {
