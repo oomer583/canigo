@@ -217,8 +217,24 @@ export default function App() {
       setState('error')
       return
     }
+    // The user may be away from their saved city: use whichever city pack covers where they are.
+    let useCity = city
+    if (!note && (!city || !inside(city, at.lat, at.lng))) {
+      const here = (await listCities().catch(() => [])).find((c) => inside(c, at.lat, at.lng))
+      if (here) {
+        useCity = here
+        note = city ? `You are in ${here.name}, not ${city.name}, so CanIGo is using ${here.name} data.` : ''
+      } else {
+        useCity = null
+        note = city ? `You are outside ${city.name}. Only online sources are used here, so the list may be short.` : ''
+      }
+    }
     try {
-      const items = await findNearby(category, at, { city, profile, signal: ctrl.signal })
+      let items = await findNearby(category, at, { city: useCity, profile, signal: ctrl.signal })
+      if (items.length === 0 && !ctrl.signal.aborted) {
+        items = await findNearby(category, at, { city: useCity, profile, radius: 5000, signal: ctrl.signal })
+        if (items.length) note = [note, 'Nothing checked within 1.2 km, so this list goes up to 5 km.'].filter(Boolean).join(' ')
+      }
       if (ctrl.signal.aborted) return
       setList({ category, items, note })
       setState('list')
