@@ -31,7 +31,7 @@ export async function onRequestGet({ request, waitUntil }) {
         method: 'POST',
         body: 'data=' + encodeURIComponent(q),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'CanIGo (https://github.com/oomer583/canigo)' },
-        signal: AbortSignal.timeout(12000)
+        signal: AbortSignal.timeout(5000)
       })
       if (!res.ok) {
         tried.push(`${mirror}: HTTP ${res.status}`)

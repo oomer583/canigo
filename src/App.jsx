@@ -144,7 +144,10 @@ export default function App() {
       }
       const [ac, osm] = await Promise.allSettled([
         hasToken ? placesNear(target.lat, target.lng, 80, ctrl.signal) : Promise.resolve([]),
-        osmNear(target.lat, target.lng, 60, ctrl.signal)
+        Promise.race([
+          osmNear(target.lat, target.lng, 60, ctrl.signal),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('osm-timeout')), 6000))
+        ])
       ])
       if (ctrl.signal.aborted) return
       const acPlaces = ac.status === 'fulfilled' ? ac.value : []
