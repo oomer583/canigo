@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { placesNear, hasToken } from './sources/accessibilityCloud.js'
 import { osmNear } from './sources/osm.js'
+import { entrancePhoto, recordFromPhoto } from './sources/streetPhoto.js'
 import { forProfile } from './verdict.js'
 import { search, distanceMeters } from './geocode.js'
 import { mergePlaces, nameKey } from './merge.js'
@@ -53,7 +54,7 @@ function askText(profile, placeName) {
   return `Hello! I would like to visit ${placeName}. I use a ${profile.label.toLowerCase()} and need a door at least ${profile.widthCm} cm wide. ${steps}. Is your entrance step-free, and how wide is the door? Thank you!`
 }
 
-function Answer({ place, profile }) {
+function Answer({ place, profile, photo }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
@@ -94,6 +95,23 @@ function Answer({ place, profile }) {
           ))}
         </ul>
       )}
+      {photo === 'loading' && <p className="hint small">Looking for a street photo of the entrance…</p>}
+      {photo && photo !== 'loading' && photo.photo && (
+        <figure className="photo">
+          <img src={photo.photo.url} alt={`Street photo near ${place.name}`} loading="lazy" />
+          <figcaption>
+            {photo.ai && !photo.ai.error && (
+              <span className="ai">
+                AI reading: steps {photo.ai.steps}, ramp {photo.ai.ramp}.{photo.ai.note ? ` ${photo.ai.note}` : ''}
+              </span>
+            )}
+            <span>
+              Photo {photo.photo.capturedAt.slice(0, 10)}{photo.photo.author ? ` by ${photo.photo.author}` : ''},{' '}
+              <a href={photo.photo.page} target="_blank" rel="noreferrer">Mapillary</a>, CC BY-SA 4.0. AI can be wrong; look at the photo yourself.
+            </span>
+          </figcaption>
+        </figure>
+      )}
       <div className="actions">
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
         {(v.tone !== 'yes' || v.conflict) && (
@@ -119,6 +137,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [place, setPlace] = useState(null)
   const [nearby, setNearby] = useState([])
+  const [photo, setPhoto] = useState(null)
   const abortRef = useRef(null)
 
   function pick(p) {
@@ -135,6 +154,7 @@ export default function App() {
     abortRef.current = ctrl
     setState('loading')
     setPlace(null)
+    setPhoto(null)
     try {
       const [target] = await search(query, ctrl.signal)
       if (!target) {
@@ -182,6 +202,16 @@ export default function App() {
       })
       setNearby(groups.filter((g) => g !== match))
       setState('done')
+      setPhoto('loading')
+      const at2 = { lat: match?.lat ?? target.lat, lng: match?.lng ?? target.lng }
+      entrancePhoto(at2.lat, at2.lng, ctrl.signal)
+        .then((result) => {
+          if (ctrl.signal.aborted) return
+          setPhoto(result)
+          const rec = recordFromPhoto(result)
+          if (rec) setPlace((p) => (p ? { ...p, records: [...p.records, rec] } : p))
+        })
+        .catch(() => !ctrl.signal.aborted && setPhoto(null))
     } catch (err) {
       if (err.name === 'AbortError') return
       setError(err.message)
@@ -220,7 +250,7 @@ export default function App() {
             {state === 'idle' && <p className="hint">Type the name of a café, shop, museum or office. CanIGo tells you if its entrance works for you.</p>}
             {state === 'loading' && <p className="hint">Checking the entrance…</p>}
             {state === 'error' && <p className="warn">{error}</p>}
-            {state === 'done' && place && <Answer place={place} profile={profile} />}
+            {state === 'done' && place && <Answer place={place} profile={profile} photo={photo} />}
           </section>
 
           {state === 'done' && place && (

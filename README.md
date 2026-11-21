@@ -19,7 +19,8 @@ Maps tell you how long the bus takes. They rarely tell you whether there are thr
    - [OpenStreetMap](https://www.openstreetmap.org) via the Overpass API, including entrance details (door width, step count) and the date each entry was last edited
 4. It merges duplicate listings of the same place and gives one answer for **you**: a door narrower than you need, or more steps than you can manage, turns the answer red.
 5. If sources disagree, CanIGo says so instead of guessing, and shows every source with its date.
-6. If the answer is unclear, "Ask them before you go" gives you a ready message with your measurements, plus the place's phone number when known.
+6. CanIGo looks for a recent street photo facing the entrance (Mapillary) and asks a vision model whether it shows steps or a ramp. The photo is always shown, so you can judge for yourself.
+7. If the answer is unclear, "Ask them before you go" gives you a ready message with your measurements, plus the place's phone number when known.
 
 ## Roadmap
 
@@ -28,7 +29,8 @@ Maps tell you how long the bus takes. They rarely tell you whether there are thr
 - [x] Same place from two sources merged, disagreements shown
 - [x] "Ask them before you go": a ready message with your measurements
 - [x] OpenStreetMap directly (Overpass API): wheelchair tags, entrance door width and steps, edit dates
-- [ ] Street-level photos (Mapillary, Panoramax) with an AI check for steps and ramps
+- [x] Street-level photo of the entrance (Mapillary) read by a vision model (Workers AI): steps? ramp?
+- [ ] Panoramax photos as a second image source
 - [ ] Project Sidewalk curb ramps (CC0)
 - [ ] User reports: "I was there, it has a ramp"
 - [ ] Saved places available offline
@@ -48,6 +50,8 @@ Get a free token by creating an organization and an API client at accessibility.
 ## Data and credits
 
 - Map tiles, search and entrance data: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), via Nominatim and Overpass
+- Street photos: [Mapillary](https://www.mapillary.com), CC BY-SA 4.0, credited to each photographer
+- Image reading: Cloudflare Workers AI (LLaVA 1.5)
 - Accessibility data: [accessibility.cloud](https://www.accessibility.cloud) by Sozialhelden e.V. and its partner sources
 
 ## License
