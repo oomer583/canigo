@@ -2,7 +2,7 @@
 // Docs: https://github.com/sozialhelden/accessibility-cloud/blob/main/app/docs/json-api.md
 // The app token is designed to be used from the browser.
 
-const BASE = 'https://accessibility-cloud.freetls.fastly.net/place-infos.json'
+const BASE = 'https://www.accessibility.cloud/place-infos.json'
 const TOKEN = import.meta.env.VITE_ACCESSIBILITY_CLOUD_TOKEN
 
 export const hasToken = Boolean(TOKEN)
