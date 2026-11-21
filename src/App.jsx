@@ -207,6 +207,7 @@ export default function App() {
     setPhoto(null)
     setList(null)
     let at = inCity ? null : await currentPosition()
+    if (at) at.fromGps = true
     let note = ''
     let away = null
     if (!at && city) {
@@ -233,12 +234,14 @@ export default function App() {
     }
     try {
       let items = await findNearby(category, at, { city: useCity, profile, signal: ctrl.signal })
-      if (items.length === 0 && !ctrl.signal.aborted) {
-        items = await findNearby(category, at, { city: useCity, profile, radius: 5000, signal: ctrl.signal })
-        if (items.length) note = [note, 'Nothing checked within 1.2 km, so this list goes up to 5 km.'].filter(Boolean).join(' ')
+      // Nothing close: widen step by step, and say so.
+      for (const km of [5, 25]) {
+        if (items.length || ctrl.signal.aborted) break
+        items = await findNearby(category, at, { city: useCity, profile, radius: km * 1000, signal: ctrl.signal })
+        if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${km} km.`].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
-      setList({ category, items, note, away })
+      setList({ category, items, note, away, centre: inCity || !at.fromGps ? null : useCity, nearMe: !inCity })
       setState('list')
     } catch (err) {
       if (err.name === 'AbortError') return
@@ -399,7 +402,7 @@ export default function App() {
             {state === 'error' && <p className="warn">{error}</p>}
             {state === 'list' && list && (
               <div className="list">
-                <h2>{list.category.label} near you</h2>
+                <h2>{list.category.label} {list.nearMe ? 'near you' : `in ${city?.name || 'the city centre'}`}</h2>
                 {list.note && <p className="hint small">{list.note}</p>}
                 {list.away && (
                   <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
@@ -407,7 +410,14 @@ export default function App() {
                   </button>
                 )}
                 {list.items.length === 0 && (
-                  <p className="hint">No {list.category.label.toLowerCase()} places with entrance information nearby yet. Places nobody has checked are not shown.</p>
+                  <>
+                    <p className="hint">No {list.category.label.toLowerCase()} places with entrance information within 25 km yet. Places nobody has checked are not shown.</p>
+                    {list.centre && !list.away && (
+                      <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
+                        Show {list.category.label.toLowerCase()} in central {list.centre.name}
+                      </button>
+                    )}
+                  </>
                 )}
                 <ul>
                   {list.items.map((i) => (

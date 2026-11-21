@@ -22,7 +22,9 @@ export async function findNearby(category, at, { city, profile, radius = 1200, s
   const all = [...(pack.status === 'fulfilled' ? pack.value : []), ...(ac.status === 'fulfilled' ? ac.value : [])]
   // A place another source marks as a cannabis shop is dropped from every source.
   const banned = new Set(all.filter(isCannabis).map((p) => nameKey(p.name)))
-  const groups = mergePlaces(all.filter((p) => inCategory(p, category) && !banned.has(nameKey(p.name))))
+  // A list of "Unnamed place" rows helps nobody: keep only places with a name.
+  const named = all.filter((p) => p.name && p.name !== 'Unnamed place')
+  const groups = mergePlaces(named.filter((p) => inCategory(p, category) && !banned.has(nameKey(p.name))))
   return rankPlaces(groups, at, profile).slice(0, 25)
 }
 
