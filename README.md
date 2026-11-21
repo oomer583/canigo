@@ -12,7 +12,8 @@ Maps tell you how long the bus takes. They rarely tell you whether there are thr
 
 ## How it works (v0.1)
 
-1. Tap the map or search a place.
+1. Pick how you get around (wheelchair, walker, stroller, wide wheelchair...)
+2. Type where you want to go.
 2. CanIGo asks [accessibility.cloud](https://www.accessibility.cloud) for places within 150 m. accessibility.cloud bundles Wheelmap, OpenStreetMap and 150+ other sources.
 3. Each place gets a clear answer: **You can get in**, **Partly accessible**, **Steps at the entrance**, or **Not known yet**, with the source linked.
 4. One tap opens directions in Google Maps.
@@ -20,6 +21,9 @@ Maps tell you how long the bus takes. They rarely tell you whether there are thr
 ## Roadmap
 
 - [x] Map, search, nearby places, one answer per place (accessibility.cloud)
+- [x] "How do you get around?" profiles: doors and steps checked against what you need
+- [x] Same place from two sources merged, disagreements shown
+- [x] "Ask them before you go": a ready message with your measurements
 - [ ] OpenStreetMap `wheelchair=*` tags directly (Overpass API)
 - [ ] Street-level photos (Mapillary, Panoramax) with an AI check for steps and ramps
 - [ ] Project Sidewalk curb ramps (CC0)

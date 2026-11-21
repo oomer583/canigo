@@ -1,95 +1,163 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, CircleMarker, useMapEvents, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { placesNear, hasToken } from './sources/accessibilityCloud.js'
-import { combine, STATUS } from './verdict.js'
+import { forProfile } from './verdict.js'
 import { search, distanceMeters } from './geocode.js'
+import { mergePlaces, nameKey } from './merge.js'
+import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 
-const START = { lat: 52.3731, lng: 4.8926 } // Amsterdam, where open accessibility data is rich
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
+const OSM_STATUS = { yes: 'yes', limited: 'partial', no: 'no' }
 
-function ClickToSearch({ onPick }) {
-  useMapEvents({ click: (e) => onPick({ lat: e.latlng.lat, lng: e.latlng.lng }) })
-  return null
-}
-
-function FlyTo({ target }) {
+function Recenter({ at }) {
   const map = useMap()
   useEffect(() => {
-    if (target) map.flyTo([target.lat, target.lng], 18, { duration: 0.8 })
-  }, [target, map])
+    if (at) map.setView([at.lat, at.lng], 18)
+  }, [at, map])
   return null
 }
 
-function Verdict({ place, onBack }) {
-  const v = combine([place.record])
-  const s = STATUS[v.status]
-  const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
+function ProfilePicker({ current, onPick }) {
   return (
-    <div className="verdict">
-      <button className="link" onClick={onBack}>← All places here</button>
-      <h2>{place.name}</h2>
-      <div className={`answer ${s.tone}`} role="status">
-        <span className="dot" aria-hidden="true" />
-        <strong>{s.label}</strong>
-      </div>
-      {v.headline?.detail && <p className="detail">{v.headline.detail}</p>}
-      {v.conflict && <p className="conflict">Sources disagree. The newest one is shown first.</p>}
-      <ul className="sources">
-        {[v.headline, ...v.others].filter(Boolean).map((r, i) => (
-          <li key={i}>
-            Source: <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.source}</a>
-            {r.updatedAt ? `, updated ${r.updatedAt.slice(0, 10)}` : ''}
-          </li>
+    <div className="picker">
+      <h2>How do you get around?</h2>
+      <p>CanIGo checks doors and steps against what you need. You can change this any time.</p>
+      <div className="choices">
+        {PROFILES.map((p) => (
+          <button key={p.id} className={current?.id === p.id ? 'choice on' : 'choice'} onClick={() => onPick(p)}>
+            <strong>{p.label}</strong>
+            <span>
+              Door at least {p.widthCm} cm · {p.steps === 0 ? 'no steps' : `up to ${p.steps} step${p.steps > 1 ? 's' : ''}`}
+            </span>
+          </button>
         ))}
-      </ul>
-      {v.status === 'unknown' && (
-        <p className="detail">No source has checked this entrance yet.</p>
-      )}
-      <a className="button" href={directions} target="_blank" rel="noreferrer">
-        Directions in Google Maps
-      </a>
+      </div>
     </div>
   )
 }
 
+// Pick the accessibility record that belongs to the place the user searched for.
+function matchPlace(groups, target) {
+  const key = nameKey(target.name)
+  const named = groups.filter((g) => {
+    const k = nameKey(g.name)
+    return key && k && (k.includes(key) || key.includes(k))
+  })
+  const pool = named.length ? named : groups.filter((g) => distanceMeters(g, target) <= 25)
+  return pool.sort((a, b) => distanceMeters(a, target) - distanceMeters(b, target))[0] || null
+}
+
+function askText(profile, placeName) {
+  const steps = profile.steps === 0 ? 'I cannot use steps' : `I can manage up to ${profile.steps} step${profile.steps > 1 ? 's' : ''}`
+  return `Hello! I would like to visit ${placeName}. I use a ${profile.label.toLowerCase()} and need a door at least ${profile.widthCm} cm wide. ${steps}. Is your entrance step-free, and how wide is the door? Thank you!`
+}
+
+function Answer({ place, profile }) {
+  const v = forProfile(place.records, profile)
+  const [copied, setCopied] = useState(false)
+  const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
+  const question = askText(profile, place.name)
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(question)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
+  }
+  return (
+    <article className="answer-card">
+      <h2>{place.name}</h2>
+      <div className={`answer ${v.tone}`} role="status">
+        <span className="dot" aria-hidden="true" />
+        <strong>{v.title}</strong>
+      </div>
+      {v.reasons.map((r) => (
+        <p key={r} className="detail">{r}</p>
+      ))}
+      {v.headline?.detail && <p className="detail">{v.headline.detail}</p>}
+      {v.conflict && <p className="conflict">Sources disagree. The newest one leads; check the others below.</p>}
+      {v.status === 'unknown' && <p className="detail">No source has checked this entrance yet.</p>}
+      {place.records.length > 0 && (
+        <ul className="sources">
+          {[v.headline, ...v.others].filter(Boolean).map((r, i) => (
+            <li key={i}>
+              <span className="dot" style={{ background: COLORS[r.status] }} aria-hidden="true" />{' '}
+              <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.source}</a>
+              {r.updatedAt ? `, ${r.updatedAt.slice(0, 10)}` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="actions">
+        <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
+        {(v.status !== 'yes' || v.tone !== 'yes') && (
+          <details className="ask">
+            <summary>Ask them before you go</summary>
+            <p className="question">{question}</p>
+            <div className="ask-actions">
+              <button onClick={copy}>{copied ? 'Copied' : 'Copy message'}</button>
+              {place.phone && <a className="button ghost" href={`tel:${place.phone.replace(/\s/g, '')}`}>Call {place.phone}</a>}
+            </div>
+          </details>
+        )}
+      </div>
+    </article>
+  )
+}
+
 export default function App() {
-  const [point, setPoint] = useState(null)
-  const [places, setPlaces] = useState([])
-  const [selected, setSelected] = useState(null)
+  const [profile, setProfile] = useState(() => loadProfile())
+  const [picking, setPicking] = useState(() => !loadProfile())
+  const [query, setQuery] = useState('')
   const [state, setState] = useState('idle') // idle | loading | done | error
   const [error, setError] = useState('')
-  const [query, setQuery] = useState('')
-  const [flyTarget, setFlyTarget] = useState(null)
+  const [place, setPlace] = useState(null)
+  const [nearby, setNearby] = useState([])
   const abortRef = useRef(null)
 
-  async function lookAround(p) {
-    setPoint(p)
-    setSelected(null)
-    abortRef.current?.abort()
-    const ctrl = new AbortController()
-    abortRef.current = ctrl
-    setState('loading')
-    try {
-      const found = await placesNear(p.lat, p.lng, 150, ctrl.signal)
-      found.sort((a, b) => distanceMeters(p, a) - distanceMeters(p, b))
-      setPlaces(found)
-      setState('done')
-    } catch (e) {
-      if (e.name === 'AbortError') return
-      setError(e.message === 'missing-token' ? 'missing-token' : e.message)
-      setState('error')
-    }
+  function pick(p) {
+    setProfile(p)
+    saveProfile(p)
+    setPicking(false)
   }
 
   async function onSearch(e) {
     e.preventDefault()
     if (!query.trim()) return
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+    setState('loading')
+    setPlace(null)
     try {
-      const [first] = await search(query)
-      if (!first) return setError('No match for that address.'), setState('error')
-      setFlyTarget(first)
-      lookAround(first)
+      const [target] = await search(query, ctrl.signal)
+      if (!target) {
+        setError('No place found with that name. Try adding the city.')
+        setState('error')
+        return
+      }
+      let groups = []
+      if (hasToken) {
+        const found = await placesNear(target.lat, target.lng, 80, ctrl.signal)
+        groups = mergePlaces(found)
+      }
+      const match = matchPlace(groups, target)
+      const records = match ? [...match.records] : []
+      if (target.osmWheelchair && OSM_STATUS[target.osmWheelchair]) {
+        records.push({ source: 'OpenStreetMap', sourceUrl: 'https://www.openstreetmap.org', status: OSM_STATUS[target.osmWheelchair], detail: null, updatedAt: null, doorWidthCm: null, steps: null })
+      }
+      setPlace({
+        name: match?.name || target.name,
+        lat: match?.lat ?? target.lat,
+        lng: match?.lng ?? target.lng,
+        phone: match?.phone || target.phone,
+        records
+      })
+      setNearby(groups.filter((g) => g !== match))
+      setState('done')
     } catch (err) {
+      if (err.name === 'AbortError') return
       setError(err.message)
       setState('error')
     }
@@ -98,62 +166,54 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>CanIGo</h1>
-        <p>Know if you can get in, before you go.</p>
-        <form onSubmit={onSearch} role="search">
-          <label className="sr-only" htmlFor="q">Search an address or place</label>
-          <input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search a place, or tap the map" />
-          <button type="submit">Search</button>
-        </form>
+        <div className="brand">
+          <h1>CanIGo</h1>
+          <p>Know if you can get in, before you go.</p>
+        </div>
+        {profile && !picking && (
+          <button className="profile-chip" onClick={() => setPicking(true)}>
+            {profile.label} · change
+          </button>
+        )}
       </header>
 
-      <main>
-        <MapContainer center={[START.lat, START.lng]} zoom={16} className="map">
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickToSearch onPick={lookAround} />
-          <FlyTo target={flyTarget} />
-          {places.map((pl) => (
-            <CircleMarker
-              key={pl.id}
-              center={[pl.lat, pl.lng]}
-              radius={selected?.id === pl.id ? 11 : 8}
-              pathOptions={{ color: '#fff', weight: 2, fillColor: COLORS[pl.record.status], fillOpacity: 1 }}
-              eventHandlers={{ click: () => setSelected(pl) }}
-            />
-          ))}
-        </MapContainer>
+      {picking ? (
+        <ProfilePicker current={profile} onPick={pick} />
+      ) : (
+        <main className="flow">
+          <form onSubmit={onSearch} role="search" className="search">
+            <label htmlFor="q">Where do you want to go?</label>
+            <div className="row">
+              <input id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Rijksmuseum Amsterdam" autoComplete="off" />
+              <button type="submit">Check</button>
+            </div>
+          </form>
 
-        <section className="panel" aria-live="polite">
-          {!hasToken && (
-            <p className="warn">Developer note: add your accessibility.cloud token to <code>.env</code> (see <code>.env.example</code>).</p>
-          )}
-          {state === 'idle' && <p>Tap a spot on the map or search for a place to see which entrances you can use.</p>}
-          {state === 'loading' && <p>Checking accessibility data…</p>}
-          {state === 'error' && <p className="warn">{error === 'missing-token' ? 'The data source is not connected yet.' : error}</p>}
-          {state === 'done' && selected && <Verdict place={selected} onBack={() => setSelected(null)} />}
-          {state === 'done' && !selected && (
-            places.length === 0 ? (
-              <p>No places with data within 150 m. Try another spot.</p>
-            ) : (
-              <ul className="places">
-                {places.map((pl) => (
-                  <li key={pl.id}>
-                    <button onClick={() => setSelected(pl)}>
-                      <span className="dot" style={{ background: COLORS[pl.record.status] }} aria-hidden="true" />
-                      <span className="name">{pl.name}</span>
-                      <span className="tag">{STATUS[pl.record.status].label}</span>
-                      {point && <span className="dist">{Math.round(distanceMeters(point, pl))} m</span>}
-                    </button>
-                  </li>
+          <section aria-live="polite">
+            {!hasToken && <p className="warn">Developer note: add your accessibility.cloud token to <code>.env</code>.</p>}
+            {state === 'idle' && <p className="hint">Type the name of a café, shop, museum or office. CanIGo tells you if its entrance works for you.</p>}
+            {state === 'loading' && <p className="hint">Checking the entrance…</p>}
+            {state === 'error' && <p className="warn">{error}</p>}
+            {state === 'done' && place && <Answer place={place} profile={profile} />}
+          </section>
+
+          {state === 'done' && place && (
+            <div className="mini-map">
+              <MapContainer center={[place.lat, place.lng]} zoom={18} className="map" scrollWheelZoom={false}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Recenter at={place} />
+                {nearby.map((g) => (
+                  <CircleMarker key={g.id} center={[g.lat, g.lng]} radius={5} pathOptions={{ color: '#fff', weight: 1, fillColor: COLORS[forProfile(g.records, profile).tone], fillOpacity: 0.7 }} />
                 ))}
-              </ul>
-            )
+                <CircleMarker center={[place.lat, place.lng]} radius={12} pathOptions={{ color: '#15201b', weight: 3, fillColor: COLORS[forProfile(place.records, profile).tone], fillOpacity: 1 }} />
+              </MapContainer>
+            </div>
           )}
-        </section>
-      </main>
+        </main>
+      )}
     </div>
   )
 }

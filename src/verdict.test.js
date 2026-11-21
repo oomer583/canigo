@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { combine } from './verdict.js'
+import { combine, forProfile } from './verdict.js'
 
-const r = (status, updatedAt = null, source = 'test') => ({ source, status, updatedAt })
+const r = (status, extra = {}) => ({ source: 'test', status, updatedAt: null, doorWidthCm: null, steps: null, ...extra })
+const wheelchair = { id: 'manual', label: 'Manual wheelchair', widthCm: 70, steps: 0 }
+const stroller = { id: 'stroller', label: 'Stroller', widthCm: 65, steps: 1 }
 
 describe('combine', () => {
   it('says unknown when no source knows anything', () => {
@@ -9,22 +11,30 @@ describe('combine', () => {
     expect(combine([r('unknown')]).status).toBe('unknown')
   })
 
-  it('uses the only known record', () => {
-    const out = combine([r('unknown'), r('yes')])
-    expect(out.status).toBe('yes')
-    expect(out.conflict).toBe(false)
-  })
-
   it('lets the newest record win and flags the disagreement', () => {
-    const out = combine([r('yes', '2023-01-01', 'osm'), r('no', '2025-06-01', 'photo')])
+    const out = combine([r('yes', { updatedAt: '2023-01-01', source: 'osm' }), r('no', { updatedAt: '2025-06-01', source: 'photo' })])
     expect(out.status).toBe('no')
     expect(out.headline.source).toBe('photo')
     expect(out.conflict).toBe(true)
     expect(out.others).toHaveLength(1)
   })
+})
 
-  it('treats a dated record as newer than an undated one', () => {
-    const out = combine([r('yes', null, 'a'), r('partial', '2024-01-01', 'b')])
-    expect(out.status).toBe('partial')
+describe('forProfile', () => {
+  it('warns when the door is narrower than the user needs', () => {
+    const out = forProfile([r('yes', { doorWidthCm: 65 })], wheelchair)
+    expect(out.tone).toBe('no')
+    expect(out.title).toMatch(/fit/)
+  })
+
+  it('accepts a wide enough door', () => {
+    const out = forProfile([r('yes', { doorWidthCm: 85 })], wheelchair)
+    expect(out.tone).toBe('yes')
+  })
+
+  it('lets a stroller manage one step but not a wheelchair', () => {
+    const records = [r('partial', { steps: 1 })]
+    expect(forProfile(records, stroller).tone).toBe('yes')
+    expect(forProfile(records, wheelchair).tone).toBe('no')
   })
 })

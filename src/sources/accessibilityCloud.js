@@ -22,31 +22,55 @@ export function statusFromA11y(a11y = {}) {
   return 'unknown'
 }
 
-function detailFromA11y(a11y = {}) {
-  const entrance = Array.isArray(a11y.entrances) ? a11y.entrances[0] : null
-  if (!entrance) return null
-  if (entrance.hasFixedRamp || entrance.hasRemovableRamp) return 'Ramp at the entrance'
-  if (entrance.isLevel === true) return 'Level entrance, no steps'
-  const steps = entrance.stairs?.count
-  if (typeof steps === 'number' && steps > 0) return `${steps} step${steps > 1 ? 's' : ''} at the entrance`
-  return null
+// A11yJSON lengths come as 90, "90cm", "0.9 m" or { value: 90, unit: 'cm' }.
+export function toCm(length) {
+  if (length == null) return null
+  if (typeof length === 'number') return length > 10 ? Math.round(length) : Math.round(length * 100)
+  if (typeof length === 'object' && typeof length.value === 'number') {
+    const unit = (length.unit || 'cm').toLowerCase()
+    if (unit === 'mm') return Math.round(length.value / 10)
+    if (unit === 'm' || unit === 'meter' || unit === 'meters') return Math.round(length.value * 100)
+    return Math.round(length.value)
+  }
+  const m = String(length).trim().match(/^([\d.,]+)\s*(cm|mm|m)?$/i)
+  if (!m) return null
+  const v = parseFloat(m[1].replace(',', '.'))
+  const unit = (m[2] || 'cm').toLowerCase()
+  return Math.round(unit === 'm' ? v * 100 : unit === 'mm' ? v / 10 : v)
 }
 
-export function normalizeFeature(feature) {
+function entranceFacts(a11y = {}) {
+  const e = Array.isArray(a11y.entrances) ? a11y.entrances[0] : null
+  if (!e) return { detail: null, doorWidthCm: null, steps: null }
+  const doorWidthCm = toCm(e.door?.width ?? e.doorWidth)
+  let steps = typeof e.stairs?.count === 'number' ? e.stairs.count : null
+  if (steps == null && e.isLevel === true) steps = 0
+  let detail = null
+  if (e.hasFixedRamp || e.hasRemovableRamp) detail = 'Ramp at the entrance'
+  else if (e.isLevel === true) detail = 'Level entrance, no steps'
+  return { detail, doorWidthCm, steps }
+}
+
+export function normalizeFeature(feature, sources = {}) {
   const p = feature.properties || {}
   const [lng, lat] = feature.geometry?.coordinates || [null, null]
   const a11y = p.accessibility || {}
+  const facts = entranceFacts(a11y)
+  const sourceName = sources[p.sourceId]?.name
   return {
     id: feature._id || p._id || p.originalId || `${lat},${lng}`,
     name: pickName(p.name),
     category: p.category || null,
+    phone: p.phoneNumber || p.phone || null,
     lat,
     lng,
     record: {
-      source: 'accessibility.cloud',
-      sourceUrl: p.infoPageUrl || 'https://www.accessibility.cloud',
+      source: sourceName ? `${sourceName} (via accessibility.cloud)` : 'accessibility.cloud',
+      sourceUrl: p.infoPageUrl || p.placeWebsiteUrl || 'https://www.accessibility.cloud',
       status: statusFromA11y(a11y),
-      detail: detailFromA11y(a11y),
+      detail: facts.detail,
+      doorWidthCm: facts.doorWidthCm,
+      steps: facts.steps,
       updatedAt: p.updatedAt || p.lastUpdated || null
     }
   }
@@ -54,9 +78,10 @@ export function normalizeFeature(feature) {
 
 export async function placesNear(lat, lng, radiusMeters = 150, signal) {
   if (!TOKEN) throw new Error('missing-token')
-  const url = `${BASE}?appToken=${encodeURIComponent(TOKEN)}&latitude=${lat}&longitude=${lng}&accuracy=${radiusMeters}`
+  const url = `${BASE}?appToken=${encodeURIComponent(TOKEN)}&latitude=${lat}&longitude=${lng}&accuracy=${radiusMeters}&includeRelated=source`
   const res = await fetch(url, { signal })
   if (!res.ok) throw new Error(`accessibility.cloud answered ${res.status}`)
   const data = await res.json()
-  return (data.features || []).map(normalizeFeature).filter((p) => p.lat != null)
+  const sources = data.related?.sources || {}
+  return (data.features || []).map((f) => normalizeFeature(f, sources)).filter((p) => p.lat != null)
 }

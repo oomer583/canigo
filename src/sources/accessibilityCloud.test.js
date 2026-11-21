@@ -24,6 +24,18 @@ describe('normalizeFeature', () => {
     expect(place.lat).toBe(52.37)
     expect(place.lng).toBe(4.89)
     expect(place.record.status).toBe('no')
-    expect(place.record.detail).toBe('2 steps at the entrance')
+    expect(place.record.steps).toBe(2)
+  })
+})
+
+import { toCm } from './accessibilityCloud.js'
+describe('toCm', () => {
+  it('reads the length formats A11yJSON uses', () => {
+    expect(toCm(90)).toBe(90)
+    expect(toCm(0.9)).toBe(90)
+    expect(toCm('80cm')).toBe(80)
+    expect(toCm('0.85 m')).toBe(85)
+    expect(toCm({ value: 900, unit: 'mm' })).toBe(90)
+    expect(toCm('wide')).toBe(null)
   })
 })

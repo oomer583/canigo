@@ -1,11 +1,18 @@
-// Address search with OpenStreetMap's Nominatim.
-// Usage policy: at most 1 request per second, so we only search when the user presses Enter.
+// Place search with OpenStreetMap's Nominatim.
+// Usage policy: at most 1 request per second, so we only search when the user submits.
 export async function search(query, signal) {
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${encodeURIComponent(query)}`
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&extratags=1&q=${encodeURIComponent(query)}`
   const res = await fetch(url, { signal, headers: { 'Accept-Language': 'en' } })
   if (!res.ok) throw new Error(`search failed (${res.status})`)
   const rows = await res.json()
-  return rows.map((r) => ({ label: r.display_name, lat: Number(r.lat), lng: Number(r.lon) }))
+  return rows.map((r) => ({
+    name: r.name || r.display_name.split(',')[0],
+    label: r.display_name,
+    lat: Number(r.lat),
+    lng: Number(r.lon),
+    phone: r.extratags?.phone || r.extratags?.['contact:phone'] || null,
+    osmWheelchair: r.extratags?.wheelchair || null
+  }))
 }
 
 export function distanceMeters(a, b) {
