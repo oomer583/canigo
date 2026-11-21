@@ -17,8 +17,12 @@ function time(record) {
   return Number.isNaN(t) ? -Infinity : t
 }
 
+// AI guesses from a street photo are supporting evidence only: they never
+// outrank a real record and never create or settle a disagreement.
 export function combine(records) {
-  const known = records.filter((r) => KNOWN.has(r.status))
+  const allKnown = records.filter((r) => KNOWN.has(r.status))
+  const real = allKnown.filter((r) => !r.ai)
+  const known = real.length ? real : allKnown
   if (known.length === 0) {
     return { status: 'unknown', headline: null, others: records, conflict: false }
   }
@@ -35,15 +39,20 @@ export function forProfile(records, profile) {
   const base = combine(records)
   const out = { ...base, tone: base.status, title: STATUS[base.status].label, reasons: [] }
   // Sources disagree and none is dated: do not pretend to know which is right.
-  if (base.conflict && !base.headline?.updatedAt) {
+  if (base.headline?.ai) {
+    out.tone = 'partial'
+    out.title = base.status === 'no' ? 'A street photo suggests steps' : 'A street photo suggests no steps'
+    out.aiOnly = true
+  } else if (base.conflict && !base.headline?.updatedAt) {
     out.tone = 'partial'
     out.title = 'Sources disagree'
     out.undated = true
   }
   if (!profile) return out
 
-  const door = records.map((r) => r.doorWidthCm).find((v) => typeof v === 'number')
-  const steps = records.map((r) => r.steps).find((v) => typeof v === 'number')
+  const measured = records.filter((r) => !r.ai)
+  const door = measured.map((r) => r.doorWidthCm).find((v) => typeof v === 'number')
+  const steps = measured.map((r) => r.steps).find((v) => typeof v === 'number')
 
   if (typeof door === 'number') {
     if (door < profile.widthCm) {

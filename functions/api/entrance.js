@@ -109,7 +109,9 @@ export async function onRequestGet({ request, env, waitUntil }) {
       return { img, dist: meters(at, place), gap: angleGap(facing, bearing(at, place)) }
     })
     .filter((c) => c.dist >= 4 && c.dist <= 70 && c.gap <= 45)
-    .sort((a, b) => a.gap + a.dist - (b.gap + b.dist) || b.img.captured_at - a.img.captured_at)
+    // Lower score is better: close, facing the place, and recent (5 points per year of age).
+    .map((c) => ({ ...c, score: c.dist + c.gap + ((Date.now() - c.img.captured_at) / 3.15e10) * 5 }))
+    .sort((a, b) => a.score - b.score)
 
   let body
   if (!candidates.length) {

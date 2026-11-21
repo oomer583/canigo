@@ -115,7 +115,7 @@ function Answer({ place, profile, photo }) {
       <div className="actions">
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
         {(v.tone !== 'yes' || v.conflict) && (
-          <details className="ask" open={v.conflict || v.status === 'unknown'}>
+          <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
             <summary>Ask them before you go</summary>
             <p className="question">{question}</p>
             <div className="ask-actions">

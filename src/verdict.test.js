@@ -44,3 +44,19 @@ describe('forProfile', () => {
     expect(out.title).toBe('Sources disagree')
   })
 })
+
+describe('AI photo records', () => {
+  const ai = { source: 'Street photo, AI estimate', status: 'yes', updatedAt: '2024-01-01', steps: 0, ai: true }
+  const yes = { source: 'A', status: 'yes', updatedAt: null }
+  const no = { source: 'B', status: 'no', updatedAt: null }
+  it('never outranks real records or settles a disagreement', () => {
+    const out = forProfile([ai, yes, no], { widthCm: 75, steps: 0 })
+    expect(out.headline.ai).toBeFalsy()
+    expect(out.title).toBe('Sources disagree')
+  })
+  it('alone gives a cautious answer, never a green one', () => {
+    const out = forProfile([ai], { widthCm: 75, steps: 0 })
+    expect(out.tone).toBe('partial')
+    expect(out.aiOnly).toBe(true)
+  })
+})
