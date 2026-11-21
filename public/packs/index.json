@@ -1,1 +1,72 @@
-[]
+[
+ {
+  "id": "amsterdam",
+  "name": "Amsterdam",
+  "country": "Netherlands",
+  "bbox": [
+   4.72,
+   52.27,
+   5.08,
+   52.43
+  ],
+  "count": 18872,
+  "builtAt": "2026-11-21T17:56:29.638Z",
+  "bytes": 2656651
+ },
+ {
+  "id": "baku",
+  "name": "Baku",
+  "country": "Azerbaijan",
+  "bbox": [
+   49.65,
+   40.3,
+   50.1,
+   40.55
+  ],
+  "count": 1275,
+  "builtAt": "2026-11-21T17:54:07.546Z",
+  "bytes": 160957
+ },
+ {
+  "id": "istanbul",
+  "name": "Istanbul",
+  "country": "Türkiye",
+  "bbox": [
+   28.6,
+   40.8,
+   29.4,
+   41.25
+  ],
+  "count": 14068,
+  "builtAt": "2026-11-21T17:57:35.919Z",
+  "bytes": 1890307
+ },
+ {
+  "id": "london",
+  "name": "London",
+  "country": "United Kingdom",
+  "bbox": [
+   -0.51,
+   51.28,
+   0.33,
+   51.7
+  ],
+  "count": 80364,
+  "builtAt": "2026-11-21T17:54:45.086Z",
+  "bytes": 10548464
+ },
+ {
+  "id": "berlin",
+  "name": "Berlin",
+  "country": "Germany",
+  "bbox": [
+   13.08,
+   52.33,
+   13.77,
+   52.68
+  ],
+  "count": 114571,
+  "builtAt": "2026-11-21T17:54:24.089Z",
+  "bytes": 16080256
+ }
+]
