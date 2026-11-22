@@ -45,7 +45,7 @@ export function currentPosition(timeoutMs = 8000) {
 }
 
 // Places of this kind that exist nearby but have no entrance information yet.
-export async function uncheckedNearby(category, at, { city, checked = [], radius = 1500, limit = 15 } = {}) {
+export async function uncheckedNearby(category, at, { city, checked = [], radius = 5000, limit = 15 } = {}) {
   if (!city || !inside(city, at.lat, at.lng)) return []
   const pack = await loadPlaces(city.id).catch(() => ({ places: [] }))
   const known = new Set(checked.map((c) => nameKey(c.name)))
