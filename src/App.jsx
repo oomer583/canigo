@@ -11,6 +11,7 @@ import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
 import { findNearby, currentPosition } from './nearby.js'
+import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
 const OSM_STATUS = { yes: 'yes', limited: 'partial', no: 'no' }
@@ -80,7 +81,61 @@ function matchPlace(groups, target) {
 }
 
 
-function Answer({ place, profile, photo, city }) {
+function VolunteerForm({ place, onAdded }) {
+  const [open, setOpen] = useState(false)
+  const [steps, setSteps] = useState('')
+  const [ramp, setRamp] = useState('unknown')
+  const [door, setDoor] = useState('')
+  const [state, setState] = useState('idle') // idle | saving | done | error
+  const [error, setError] = useState('')
+  async function submit(e) {
+    e.preventDefault()
+    setState('saving')
+    try {
+      const rec = await sendVolunteer({ name: place.name, lat: place.lat, lng: place.lng, steps: steps === '' ? null : Number(steps), ramp, doorCm: door === '' ? null : Number(door) })
+      onAdded(rec)
+      setState('done')
+    } catch (err) {
+      setError(err.message)
+      setState('error')
+    }
+  }
+  if (state === 'done') return <p className="thanks">Thank you. The next person who checks {place.name} will see what you added.</p>
+  if (!open) return <button className="button ghost" onClick={() => setOpen(true)}>I've been here: add what the entrance is like</button>
+  return (
+    <form className="volunteer" onSubmit={submit}>
+      <h3>What is the entrance like?</h3>
+      <p className="hint small">Only add what you saw yourself. It will be shown as "Volunteer, not verified".</p>
+      <fieldset>
+        <legend>Steps at the entrance</legend>
+        {[['0', 'None'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more'], ['', "Don't know"]].map(([v, l]) => (
+          <label key={l} className={steps === v ? 'pill on' : 'pill'}>
+            <input type="radio" name="steps" value={v} checked={steps === v} onChange={() => setSteps(v)} /> {l}
+          </label>
+        ))}
+      </fieldset>
+      <fieldset>
+        <legend>Ramp</legend>
+        {[['yes', 'Yes'], ['no', 'No'], ['unknown', "Don't know"]].map(([v, l]) => (
+          <label key={v} className={ramp === v ? 'pill on' : 'pill'}>
+            <input type="radio" name="ramp" value={v} checked={ramp === v} onChange={() => setRamp(v)} /> {l}
+          </label>
+        ))}
+      </fieldset>
+      <label className="door">
+        Door width in cm, if you measured it
+        <input type="number" inputMode="numeric" min="40" max="300" value={door} onChange={(e) => setDoor(e.target.value)} placeholder="e.g. 85" />
+      </label>
+      {state === 'error' && <p className="warn">{error}</p>}
+      <div className="ask-actions">
+        <button type="submit" disabled={state === 'saving'}>{state === 'saving' ? 'Saving…' : 'Add'}</button>
+        <button type="button" className="button ghost" onClick={() => setOpen(false)}>Cancel</button>
+      </div>
+    </form>
+  )
+}
+
+function Answer({ place, profile, photo, city, onAdded, onWrong }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
   const [lang, setLang] = useState(() => defaultLang(city))
@@ -105,6 +160,7 @@ function Answer({ place, profile, photo, city }) {
         <p key={r} className="detail">{r}</p>
       ))}
       {v.headline?.detail && <p className="detail">{v.headline.detail}</p>}
+      {v.headline?.volunteer && <p className="conflict">Added by a volunteer and not verified. Ask them before you go if you are unsure.</p>}
       {v.conflict && (
         <p className="conflict">
           {v.undated ? 'Some sources say yes, some say no, and none is dated. Ask them before you go.' : 'Sources disagree. The newest one leads; check the others below.'}
@@ -116,8 +172,11 @@ function Answer({ place, profile, photo, city }) {
           {[v.headline, ...v.others].filter(Boolean).map((r, i) => (
             <li key={i}>
               <span className="dot" style={{ background: COLORS[r.status] }} aria-hidden="true" />{' '}
-              <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.source}</a>
+              {r.sourceUrl ? <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.source}</a> : <span>{r.source}</span>}
               {r.updatedAt ? `, ${String(r.updatedAt).slice(0, 10)}` : ''}
+              {r.volunteer && r.contribId != null && (
+                <button className="link small" onClick={() => onWrong(r)}>Wrong?</button>
+              )}
             </li>
           ))}
         </ul>
@@ -143,6 +202,7 @@ function Answer({ place, profile, photo, city }) {
         </figure>
       )}
       <div className="actions">
+        <VolunteerForm key={place.name + place.lat} place={place} onAdded={onAdded} />
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
         {(v.tone !== 'yes' || v.conflict) && (
           <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
@@ -180,7 +240,19 @@ export default function App() {
   const [list, setList] = useState(null) // { category, items, note } for "coffee near me"
   const abortRef = useRef(null)
 
+  function addRecord(rec) {
+    setPlace((p) => (p ? { ...p, records: [...p.records, rec] } : p))
+  }
+
+  async function markWrong(rec) {
+    await reportWrong(rec.contribId).catch(() => {})
+    setPlace((p) => (p ? { ...p, records: p.records.filter((r) => r !== rec) } : p))
+  }
+
   function loadPhoto(at, ctrl) {
+    volunteerNear(at, ctrl.signal)
+      .then((recs) => !ctrl.signal.aborted && recs.forEach(addRecord))
+      .catch(() => {})
     setPhoto('loading')
     entrancePhoto(at.lat, at.lng, ctrl.signal)
       .then((result) => {
@@ -425,7 +497,7 @@ export default function App() {
             {state === 'done' && place?.fromList && list && (
               <button className="button ghost back" onClick={() => { setState('list'); setPlace(null) }}>← Back to {list.category.label.toLowerCase()} list</button>
             )}
-            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} />}
+            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} />}
           </section>
 
           {state === 'done' && place && (

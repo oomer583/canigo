@@ -85,3 +85,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .foot { margin-top: 32px; text-align: center; }
 .link { background: none; border: 0; color: var(--brand); text-decoration: underline; font-weight: 400; font-size: 14px; }
 .small { font-size: 14px; }
+.volunteer { border: 2px solid var(--brand); border-radius: 14px; padding: 14px; display: grid; gap: 12px; }
+.volunteer h3 { margin: 0; font-size: 18px; }
+.volunteer fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.volunteer legend { font-weight: 700; margin-bottom: 6px; width: 100%; }
+.pill { border: 2px solid #d9d5ca; border-radius: 999px; padding: 8px 12px; cursor: pointer; background: #fff; font-size: 15px; }
+.pill input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.pill.on { border-color: var(--brand); background: #e3f3ea; font-weight: 700; }
+.pill:focus-within { outline: 3px solid var(--accent); }
+.door { display: grid; gap: 6px; font-weight: 700; }
+.door input { padding: 12px; border-radius: 10px; border: 2px solid #d9d5ca; font-size: 16px; max-width: 160px; }
+.thanks { background: #e3f3ea; border-radius: 12px; padding: 12px; margin: 0; }
+.link.small { font-size: 13px; margin-left: 6px; padding: 0; }
