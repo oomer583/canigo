@@ -46,6 +46,22 @@ jobs:
           done
           node -e "const c=require('./scripts/cities.json');const fs=require('fs');const list=c.filter(x=>fs.existsSync('public/packs/'+x.id+'.json')).map(({pbf,...x})=>{const p=JSON.parse(fs.readFileSync('public/packs/'+x.id+'.json'));return {...x,count:p.count,builtAt:p.builtAt,bytes:fs.statSync('public/packs/'+x.id+'.json').size}});fs.writeFileSync('public/packs/index.json',JSON.stringify(list,null,1))"
           ls -la public/packs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build Overture places (places that exist, entrance not checked)
+        continue-on-error: true
+        run: |
+          pip install -q overturemaps
+          for id in $(jq -r '.[].id' scripts/cities.json); do
+            bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
+            if overturemaps download --bbox="$bbox" -f geojsonseq -t place -o "work/$id-places.geojsonseq"; then
+              python scripts/build-places.py "$id" "work/$id-places.geojsonseq" || echo "::warning::places failed for $id"
+            else
+              echo "::warning::Overture download failed for $id"
+            fi
+          done
+          ls -la public/packs
       - name: Commit packs
         run: |
           git config user.name "canigo-bot"
