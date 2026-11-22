@@ -3,7 +3,7 @@
 // The app token is designed to be used from the browser.
 
 const BASE = 'https://www.accessibility.cloud/place-infos.json'
-const TOKEN = import.meta.env.VITE_ACCESSIBILITY_CLOUD_TOKEN
+const TOKEN = import.meta.env?.VITE_ACCESSIBILITY_CLOUD_TOKEN
 
 export const hasToken = Boolean(TOKEN)
 

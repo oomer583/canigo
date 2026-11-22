@@ -4,6 +4,7 @@ import { loadPack, packNear, inside } from './sources/cityPack.js'
 import { forProfile } from './verdict.js'
 import { distanceMeters } from './geocode.js'
 import { inCategory, isCannabis } from './categories.js'
+import { loadPlaces, placesNear as overtureNear } from './sources/places.js'
 import { mergePlaces, nameKey } from './merge.js'
 
 const RANK = { yes: 0, partial: 1, unknown: 2, no: 3 }
@@ -41,4 +42,14 @@ export function currentPosition(timeoutMs = 8000) {
       { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 60000 }
     )
   })
+}
+
+// Places of this kind that exist nearby but have no entrance information yet.
+export async function uncheckedNearby(category, at, { city, checked = [], radius = 1500, limit = 15 } = {}) {
+  if (!city || !inside(city, at.lat, at.lng)) return []
+  const pack = await loadPlaces(city.id).catch(() => ({ places: [] }))
+  const known = new Set(checked.map((c) => nameKey(c.name)))
+  return overtureNear(pack, at, radius, category.tags)
+    .filter((p) => !isCannabis(p) && !known.has(nameKey(p.name)) && !checked.some((c) => distanceMeters(c, p) < 25))
+    .slice(0, limit)
 }

@@ -10,7 +10,7 @@ import { mergePlaces, nameKey } from './merge.js'
 import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
-import { findNearby, currentPosition } from './nearby.js'
+import { findNearby, uncheckedNearby, currentPosition } from './nearby.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
@@ -135,7 +135,7 @@ function VolunteerForm({ place, onAdded }) {
   )
 }
 
-function Answer({ place, profile, photo, city, onAdded, onWrong }) {
+function Answer({ place, profile, photo, city, onAdded, onWrong, volunteer }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
   const [lang, setLang] = useState(() => defaultLang(city))
@@ -202,7 +202,11 @@ function Answer({ place, profile, photo, city, onAdded, onWrong }) {
         </figure>
       )}
       <div className="actions">
-        <VolunteerForm key={place.name + place.lat} place={place} onAdded={onAdded} />
+        {volunteer ? (
+          <VolunteerForm key={place.name + place.lat} place={place} onAdded={onAdded} />
+        ) : (
+          v.status === 'unknown' && <p className="hint small">Know this entrance? Turn on volunteer mode at the bottom of the page to add it.</p>
+        )}
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
         {(v.tone !== 'yes' || v.conflict) && (
           <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
@@ -237,6 +241,13 @@ export default function App() {
   const [place, setPlace] = useState(null)
   const [nearby, setNearby] = useState([])
   const [photo, setPhoto] = useState(null)
+  const [volunteer, setVolunteer] = useState(() => {
+    try {
+      return localStorage.getItem('canigo.volunteer') === '1'
+    } catch {
+      return false
+    }
+  })
   const [list, setList] = useState(null) // { category, items, note } for "coffee near me"
   const abortRef = useRef(null)
 
@@ -305,7 +316,9 @@ export default function App() {
         if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${km} km.`].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
-      setList({ category, items, note, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
+      const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items })
+      if (ctrl.signal.aborted) return
+      setList({ category, items, unchecked, note, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
       setState('list')
     } catch (err) {
       if (err.name === 'AbortError') return
@@ -317,15 +330,26 @@ export default function App() {
   function openFromList(item) {
     const ctrl = freshRequest()
     setPlace({ name: item.name, lat: item.lat, lng: item.lng, phone: item.phone, records: [...item.records], fromList: true })
-    setNearby(list.items.filter((i) => i.id !== item.id))
+    setNearby([...list.items, ...(list.unchecked || [])].filter((i) => i.id !== item.id))
     setState('done')
     loadPhoto(item, ctrl)
+  }
+
+  function toggleVolunteer(on) {
+    setVolunteer(on)
+    try {
+      if (on) localStorage.setItem('canigo.volunteer', '1')
+      else localStorage.removeItem('canigo.volunteer')
+    } catch {
+      // not saved; works for this visit
+    }
   }
 
   function startOver() {
     try {
       localStorage.removeItem('canigo.profile')
       localStorage.removeItem('canigo.city')
+      localStorage.removeItem('canigo.volunteer')
     } catch {
       // nothing saved
     }
@@ -468,7 +492,7 @@ export default function App() {
               <div className="list">
                 <h2>{list.category.label} {list.nearMe ? 'near you' : `in ${city?.name || 'the city centre'}`}</h2>
                 {list.note && <p className="hint small">{list.note}</p>}
-                {list.items.length === 0 && (
+                {list.items.length === 0 && list.unchecked.length === 0 && (
                   <>
                     <p className="hint">No {list.category.label.toLowerCase()} places with entrance information within 25 km yet. Places nobody has checked are not shown.</p>
                     {list.centre && (
@@ -491,13 +515,31 @@ export default function App() {
                     </li>
                   ))}
                 </ul>
-                <p className="hint small">Only places with entrance information are listed.</p>
+                {list.unchecked.length > 0 && (
+                  <>
+                    <h3 className="subhead">Not checked yet</h3>
+                    <p className="hint small">These places exist, but nobody has said what their entrance is like. Ask them before you go.</p>
+                    <ul>
+                      {list.unchecked.map((i) => (
+                        <li key={i.id}>
+                          <button className="row-item" onClick={() => openFromList(i)}>
+                            <span className="dot" style={{ background: COLORS.unknown }} aria-hidden="true" />
+                            <span className="row-text">
+                              <strong>{i.name}</strong>
+                              <span>Entrance not checked · {i.distance < 1000 ? `${i.distance} m` : `${(i.distance / 1000).toFixed(1)} km`}</span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
             )}
             {state === 'done' && place?.fromList && list && (
               <button className="button ghost back" onClick={() => { setState('list'); setPlace(null) }}>← Back to {list.category.label.toLowerCase()} list</button>
             )}
-            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} />}
+            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} volunteer={volunteer} />}
           </section>
 
           {state === 'done' && place && (
@@ -516,7 +558,12 @@ export default function App() {
             </div>
           )}
           <footer className="foot">
+            <label className="vol-toggle">
+              <input type="checkbox" checked={volunteer} onChange={(e) => toggleVolunteer(e.target.checked)} />
+              I'm a volunteer: let me add what entrances are like
+            </label>
             <button className="link" onClick={startOver}>Start over</button>
+            <p className="credits">Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).</p>
           </footer>
         </main>
       )}

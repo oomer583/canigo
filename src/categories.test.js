@@ -38,3 +38,13 @@ describe('ask messages', () => {
     expect(askText(walker, 'Mitri', 'en')).toMatch(/75 cm/)
   })
 })
+
+import { placesNear as overtureNear } from './sources/places.js'
+describe('unchecked places', () => {
+  it('lists Overture places of the right kind, nearest first', () => {
+    const pack = { places: [['Far Cafe', 40.41, 49.86, 'cafe'], ['Near Cafe', 40.4001, 49.86, 'cafe'], ['Bank', 40.4, 49.86, 'bank']] }
+    const out = overtureNear(pack, { lat: 40.4, lng: 49.86 }, 2000, ['cafe'])
+    expect(out.map((p) => p.name)).toEqual(['Near Cafe', 'Far Cafe'])
+    expect(out[0].records).toEqual([])
+  })
+})
