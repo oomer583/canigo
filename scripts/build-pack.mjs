@@ -49,11 +49,14 @@ if (process.argv[1]?.endsWith('build-pack.mjs')) {
   const [cityId, file] = process.argv.slice(2)
   const lines = readFileSync(file, 'utf8').split('\n')
   const elements = []
+  const seen = new Set()
   for (const line of lines) {
     const clean = line.replace(/^\x1e/, '').trim()
     if (!clean) continue
     const el = toElement(JSON.parse(clean))
-    if (el) elements.push(el)
+    if (!el || seen.has(`${el.type}/${el.id}`)) continue
+    seen.add(`${el.type}/${el.id}`)
+    elements.push(el)
   }
   const out = { city: cityId, builtAt: new Date().toISOString(), count: elements.length, elements }
   writeFileSync(`public/packs/${cityId}.json`, JSON.stringify(out))

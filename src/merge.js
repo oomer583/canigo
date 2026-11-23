@@ -21,6 +21,20 @@ function similar(a, b) {
   return ka === kb || ka.includes(kb) || kb.includes(ka)
 }
 
+// The same fact listed twice must not look like two sources agreeing:
+// identical records collapse, and Wheelmap's OSM mirror is dropped when OpenStreetMap itself says the same.
+const isOsm = (r) => /^OpenStreetMap/i.test(r.source || '')
+const isOsmMirror = (r) => /OSM Mirror/i.test(r.source || '')
+
+export function dedupeRecords(records) {
+  const out = []
+  for (const r of records) {
+    if (out.some((o) => o.source === r.source && o.status === r.status && String(o.updatedAt) === String(r.updatedAt))) continue
+    out.push(r)
+  }
+  return out.filter((r) => !(isOsmMirror(r) && out.some((o) => isOsm(o) && o.status === r.status)))
+}
+
 export function mergePlaces(places, maxMeters = 40) {
   const groups = []
   for (const p of places) {
@@ -33,5 +47,6 @@ export function mergePlaces(places, maxMeters = 40) {
       groups.push({ id: p.id, name: p.name, lat: p.lat, lng: p.lng, phone: p.phone || null, category: p.category, records: [p.record] })
     }
   }
+  for (const g of groups) g.records = dedupeRecords(g.records)
   return groups
 }

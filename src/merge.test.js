@@ -20,3 +20,20 @@ describe('mergePlaces', () => {
     expect(groups).toHaveLength(2)
   })
 })
+
+import { dedupeRecords } from './merge.js'
+
+describe('dedupeRecords', () => {
+  const osm = { source: 'OpenStreetMap', status: 'no', updatedAt: '2025-12-23' }
+  const mirror = { source: 'Wheelmap OSM Mirror (via accessibility.cloud)', status: 'no', updatedAt: null }
+  it('collapses the same record listed twice', () => {
+    expect(dedupeRecords([osm, { ...osm }])).toHaveLength(1)
+  })
+  it('drops the OSM mirror when OpenStreetMap says the same', () => {
+    expect(dedupeRecords([mirror, osm, { ...mirror }])).toEqual([osm])
+  })
+  it('keeps the mirror when it disagrees or OSM is missing', () => {
+    expect(dedupeRecords([mirror])).toHaveLength(1)
+    expect(dedupeRecords([osm, { ...mirror, status: 'yes' }])).toHaveLength(2)
+  })
+})
