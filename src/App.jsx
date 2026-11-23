@@ -101,7 +101,7 @@ function VolunteerForm({ place, onAdded }) {
     }
   }
   if (state === 'done') return <p className="thanks">Thank you. The next person who checks {place.name} will see what you added.</p>
-  if (!open) return <button className="button ghost" onClick={() => setOpen(true)}>I've been here: add what the entrance is like</button>
+  if (!open) return <button className="link add-entrance" onClick={() => setOpen(true)}>Been here? Add what the entrance is like</button>
   return (
     <form className="volunteer" onSubmit={submit}>
       <h3>What is the entrance like?</h3>
@@ -135,7 +135,7 @@ function VolunteerForm({ place, onAdded }) {
   )
 }
 
-function Answer({ place, profile, photo, city, onAdded, onWrong, volunteer }) {
+function Answer({ place, profile, photo, city, onAdded, onWrong }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
   const [lang, setLang] = useState(() => defaultLang(city))
@@ -202,11 +202,6 @@ function Answer({ place, profile, photo, city, onAdded, onWrong, volunteer }) {
         </figure>
       )}
       <div className="actions">
-        {volunteer ? (
-          <VolunteerForm key={place.name + place.lat} place={place} onAdded={onAdded} />
-        ) : (
-          v.status === 'unknown' && <p className="hint small">Know this entrance? Turn on volunteer mode at the bottom of the page to add it.</p>
-        )}
         <a className="button" href={directions} target="_blank" rel="noreferrer">Directions</a>
         {(v.tone !== 'yes' || v.conflict) && (
           <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
@@ -225,6 +220,7 @@ function Answer({ place, profile, photo, city, onAdded, onWrong, volunteer }) {
             </div>
           </details>
         )}
+        <VolunteerForm key={place.name + place.lat} place={place} onAdded={onAdded} />
       </div>
     </article>
   )
@@ -241,13 +237,6 @@ export default function App() {
   const [place, setPlace] = useState(null)
   const [nearby, setNearby] = useState([])
   const [photo, setPhoto] = useState(null)
-  const [volunteer, setVolunteer] = useState(() => {
-    try {
-      return localStorage.getItem('canigo.volunteer') === '1'
-    } catch {
-      return false
-    }
-  })
   const [list, setList] = useState(null) // { category, items, note } for "coffee near me"
   const abortRef = useRef(null)
 
@@ -333,16 +322,6 @@ export default function App() {
     setNearby([...list.items, ...(list.unchecked || [])].filter((i) => i.id !== item.id))
     setState('done')
     loadPhoto(item, ctrl)
-  }
-
-  function toggleVolunteer(on) {
-    setVolunteer(on)
-    try {
-      if (on) localStorage.setItem('canigo.volunteer', '1')
-      else localStorage.removeItem('canigo.volunteer')
-    } catch {
-      // not saved; works for this visit
-    }
   }
 
   function startOver() {
@@ -539,7 +518,7 @@ export default function App() {
             {state === 'done' && place?.fromList && list && (
               <button className="button ghost back" onClick={() => { setState('list'); setPlace(null) }}>← Back to {list.category.label.toLowerCase()} list</button>
             )}
-            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} volunteer={volunteer} />}
+            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} />}
           </section>
 
           {state === 'done' && place && (
@@ -558,10 +537,6 @@ export default function App() {
             </div>
           )}
           <footer className="foot">
-            <label className="vol-toggle">
-              <input type="checkbox" checked={volunteer} onChange={(e) => toggleVolunteer(e.target.checked)} />
-              I'm a volunteer: let me add what entrances are like
-            </label>
             <button className="link" onClick={startOver}>Start over</button>
             <p className="credits">Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).</p>
           </footer>

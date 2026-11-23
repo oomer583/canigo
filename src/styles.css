@@ -99,6 +99,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .link.small { font-size: 13px; margin-left: 6px; padding: 0; }
 .subhead { margin: 22px 0 4px; font-size: 18px; }
 .foot { display: grid; gap: 12px; justify-items: center; }
-.vol-toggle { display: flex; gap: 8px; align-items: center; font-size: 15px; cursor: pointer; }
-.vol-toggle input { width: 20px; height: 20px; }
 .credits { font-size: 12px; opacity: .6; margin: 0; text-align: center; max-width: 520px; }
+.add-entrance { justify-self: start; font-size: 15px; padding: 4px 0; }
