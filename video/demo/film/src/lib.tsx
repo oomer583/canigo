@@ -98,9 +98,9 @@ export const Note: React.FC<{at: number; out?: number; x: number; y: number; lx:
     <div style={{position: 'absolute', inset: 0, opacity: vis, pointerEvents: 'none'}}>
       <div style={{position: 'absolute', left: x - 7, top: y - 7, width: 14, height: 14, borderRadius: 7, background: color, transform: `scale(${prog(f, at, 10)})`, boxShadow: `0 0 0 6px ${color}33`}} />
       <div style={{position: 'absolute', left: x, top: y, width: len * prog(f, at + 3, 14), height: 2, background: color, transformOrigin: '0 50%', transform: `rotate(${ang}deg)`}} />
-      <div style={{position: 'absolute', left: align === 'left' ? lx + 14 : undefined, right: align === 'right' ? 1920 - lx + 14 : undefined, top: ly - 20, textAlign: align, opacity: p}}>
-        <Line at={at + 6}><div style={{fontFamily: F.mono, fontWeight: 600, fontSize: 26, color: C.paper, letterSpacing: '.02em', whiteSpace: 'nowrap', textShadow: '0 2px 18px rgba(0,0,0,.5)'}}>{label}</div></Line>
-        {sub && <Line at={at + 10}><div style={{fontFamily: F.mono, fontSize: 21, color: C.mute, marginTop: 8, whiteSpace: 'nowrap', textShadow: '0 2px 18px rgba(0,0,0,.5)'}}>{sub}</div></Line>}
+      <div style={{position: 'absolute', left: align === 'left' ? lx + 14 : undefined, right: align === 'right' ? 1920 - lx + 14 : undefined, top: ly - 22, textAlign: align, opacity: p}}>
+        <Line at={at + 6}><div style={{fontFamily: F.mono, fontWeight: 600, fontSize: 30, color: C.paper, letterSpacing: '.02em', whiteSpace: 'nowrap', textShadow: '0 2px 18px rgba(0,0,0,.5)'}}>{label}</div></Line>
+        {sub && <Line at={at + 10}><div style={{fontFamily: F.mono, fontSize: 24, color: C.mute, marginTop: 8, whiteSpace: 'nowrap', textShadow: '0 2px 18px rgba(0,0,0,.5)'}}>{sub}</div></Line>}
       </div>
     </div>
   );

@@ -61,7 +61,7 @@ const Hook: React.FC = () => {
             <div style={{fontFamily: F.sans, fontWeight: 700, fontSize: 30, color: C.ink}}>Walker or gait trainer</div>
             <div style={{fontFamily: F.sans, fontWeight: 600, fontSize: 22, color: 'rgba(21,32,27,.62)', marginTop: 6}}>Door at least 75 cm · no steps</div>
           </div>
-          <div style={{...mono(20), marginTop: 16}}>my profile in CanIGo</div>
+          <div style={{...mono(22), marginTop: 16}}>my profile in CanIGo</div>
         </div>
       </Drift>
       <Vignette /><Grain />
@@ -94,8 +94,8 @@ const Problem: React.FC = () => {
     <Stage>
       <Range a={B(15)} b={B(28)}>
         <Drift a={B(15)} b={B(28)} dx={-40}>
-          <div style={{position: 'absolute', left: 150, top: 190}}><Line at={B(15) + 2}><div style={mono(26)}>MAP APPS · EVERY CITY</div></Line></div>
-          <div style={{position: 'absolute', left: 140, top: 250}}><Line at={B(15) + 4}><div style={big(230)}>wheelchair:</div></Line></div>
+          <div style={{position: 'absolute', left: 150, top: 190}}><Line at={B(15)} d={12}><div style={mono(26)}>MAP APPS · EVERY CITY</div></Line></div>
+          <div style={{position: 'absolute', left: 140, top: 250}}><Line at={B(15) + 1} d={13}><div style={big(230)}>wheelchair:</div></Line></div>
           <div style={{position: 'absolute', left: 140, top: 500, width: 900}}><Roller /></div>
           <div style={{position: 'absolute', left: 1010, top: 560}}><Line at={B(24)}><div style={serif(200, {fontStyle: 'italic', color: C.accent})}>Says who?</div></Line></div>
           <div style={{position: 'absolute', left: 150, top: 880, display: 'flex', gap: 60}}>
@@ -107,7 +107,7 @@ const Problem: React.FC = () => {
       <Range a={B(28)} b={B(34)}>
         <Drift a={B(28)} b={B(34)} dx={-30}>
           <div style={{position: 'absolute', left: 150, top: 330}}>
-            <Line at={B(28)}><div style={big(140)}>Not how many steps.</div></Line>
+            <Line at={B(28)} d={12}><div style={big(140)}>Not how many steps.</div></Line>
             <div style={{height: 40}} />
             <Line at={B(30)}><div style={big(140, {color: C.mute})}>Not how wide the door is.</div></Line>
           </div>
@@ -116,8 +116,8 @@ const Problem: React.FC = () => {
       <Range a={B(34)} b={B(48)}>
         <Drift a={B(34)} b={B(48)} dx={-30} ds={0.06}>
           <div style={{position: 'absolute', left: 150, top: 230}}>
-            <Line at={B(34)} out={B(45)}><div style={big(160)}>And yes —</div></Line>
-            <Line at={B(36)} d={22} out={B(45) + 3}><div style={serif(380, {fontStyle: 'italic', color: C.accent, lineHeight: 1})}>for whom?</div></Line>
+            <Line at={B(34)} d={12} out={B(46) - 4}><div style={big(160)}>And yes —</div></Line>
+            <Line at={B(36)} d={22} out={B(46) - 1}><div style={serif(380, {fontStyle: 'italic', color: C.accent, lineHeight: 1})}>for whom?</div></Line>
           </div>
         </Drift>
       </Range>
@@ -132,7 +132,7 @@ const Icon: React.FC<{size: number}> = ({size}) => (
 );
 const Reveal: React.FC = () => {
   const f = useCurrentFrame();
-  const line = prog(f, B(46) + 6, 24, inout);
+  const line = prog(f, B(47), 17, inout);
   const away = prog(f, B(56) - 8, 14, Easing2);
   return (
     <Stage>
@@ -282,7 +282,7 @@ const Ask: React.FC = () => {
 const Cafe: React.FC = () => {
   const f = useCurrentFrame();
   const a = B(184);
-  const t = 6.0 + ((f - a) / 30) * 1.6;
+  const t = 6.45 + ((f - a) / 30) * 1.6;
   const keys: Key[] = [
     K(a - 6, 480, 470, 1.4),
     K(a + 12, 480, 460, 1.6, 1250, 540, expo),
@@ -339,8 +339,8 @@ const Close: React.FC = () => {
             <Line at={B(214)}><div style={mono(34, {color: C.paper})}>github.com/oomer583/canigo</div></Line>
           </div>
           <div style={{position: 'absolute', left: 0, right: 0, top: 930, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
-            <Line at={B(216)}><div style={mono(20)}>Ömer · 15 · Baku — Arbiter Hacks V1</div></Line>
-            <Line at={B(217)}><div style={mono(17, {opacity: .7})}>Data © OpenStreetMap contributors · accessibility.cloud · Music: Artur Aravidi via Pixabay</div></Line>
+            <Line at={B(216)}><div style={mono(22)}>Ömer · 15 · Baku — Arbiter Hacks V1</div></Line>
+            <Line at={B(217)}><div style={mono(19, {opacity: .75})}>Data © OpenStreetMap contributors · accessibility.cloud · Music: Artur Aravidi via Pixabay</div></Line>
           </div>
         </AbsoluteFill>
       </Range>
@@ -352,8 +352,8 @@ const Close: React.FC = () => {
 export const Film: React.FC = () => (
   <AbsoluteFill style={{background: C.night}}>
     <Range a={0} b={B(15)}><Hook /></Range>
-    <Range a={B(15)} b={B(46) + 6}><Problem /></Range>
-    <Range a={B(46) + 6} b={B(56)}><Reveal /></Range>
+    <Range a={B(15)} b={B(47)}><Problem /></Range>
+    <Range a={B(47)} b={B(56)}><Reveal /></Range>
     <Range a={B(56)} b={B(88)}><How /></Range>
     <Range a={B(88)} b={B(160)}><SameDoor /></Range>
     <Range a={B(160)} b={B(184)}><Ask /></Range>

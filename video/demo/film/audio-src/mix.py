@@ -30,7 +30,7 @@ for s0 in range(0, end, blk):
     for ch in range(2):
         y[:, ch], zi[:, :, ch] = sosfilt(sos, seg[:, ch], zi=zi[:, :, ch])
     # compensate the level lost to the filter a little, so the story isn't too quiet
-    out[s0:s0 + blk] = y * (1.6 if c < 18000 else 1.0)
+    out[s0:s0 + blk] = y * (0.55 if c < 18000 else 1.0)
 # crossfade filtered -> dry over the last block region
 m = out
 
@@ -99,7 +99,7 @@ a = fr(B(88))
 for c in [4.07, 7.7]: put(tick(), a + c - 1.64, -30)
 put(tick(), fr(B(141)) + (7.68 - 8.83), -28)                       # the Check click before the silent beat
 a = fr(B(160))
-for c in [12.9, 18.07, 20.43, 22.8, 25.2]: put(tick(2100), a + c - 11.8, -31)
+for c in [12.9, 18.07, 20.43, 22.8, 25.17]: put(tick(2100), a + c - 11.8, -31)
 
 # small room
 ir_n = int(0.7 * SR); ti = np.arange(ir_n) / SR
@@ -113,5 +113,9 @@ import wave
 pcm = (np.clip(mix, -1, 1) * 32767).astype('<i2')
 with wave.open('audio-src/premaster.wav', 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
-subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', 'audio-src/premaster.wav', '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11', '-ar', str(SR), 'public/audio/mix.wav'], check=True)
+# two-pass linear loudnorm: one gain for the whole film, so the "door opens" level change survives
+r = subprocess.run(['ffmpeg', '-hide_banner', '-i', 'audio-src/premaster.wav', '-af', 'loudnorm=I=-14:TP=-1.5:LRA=20:print_format=json', '-f', 'null', '-'], capture_output=True, text=True).stderr
+js = json.loads(r[r.rindex('{'):r.rindex('}') + 1])
+af = f"loudnorm=I=-14:TP=-1.5:LRA=20:linear=true:measured_I={js['input_i']}:measured_TP={js['input_tp']}:measured_LRA={js['input_lra']}:measured_thresh={js['input_thresh']}:offset={js['target_offset']}"
+subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', 'audio-src/premaster.wav', '-af', af, '-ar', str(SR), 'public/audio/mix.wav'], check=True)
 print('ok')
