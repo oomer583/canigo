@@ -10,12 +10,17 @@ const Range: React.FC<{a: number; b: number; children: React.ReactNode}> = ({a, 
 };
 
 // real app recording as a sheet in world space; time-remapped frame by frame
+// the crop cuts the app header's subtitle mid-word; cover that fragment (header bar colour) while the header is on screen
+const HDR: Record<string, (t: number) => boolean> = {
+  intro: (t) => t < 1.95 || t > 7.1, crutches: () => true, wheelchair: () => true, ask: (t) => t < 14.45, cafe: (t) => t < 9.3
+};
 const Clip: React.FC<{src: string; t: number; x: number; y: number; w: number; h: number; o?: number; cx?: number; cw?: number}> = ({src, t, x, y, w, h, o = 1, cx = 150, cw = 660}) => (
   <div style={{position: 'absolute', left: x + cx, top: y, width: cw, height: h, borderRadius: 16, overflow: 'hidden', opacity: o,
     boxShadow: '0 1px 0 rgba(255,255,255,.06) inset, 0 50px 120px -30px rgba(0,0,0,.65), 0 18px 40px -18px rgba(0,0,0,.5)'}}>
     <Freeze frame={Math.max(0, Math.round(t * 30))}>
       <OffthreadVideo src={staticFile(`clips/${src}.mp4`)} muted style={{width: w, height: h, display: 'block', marginLeft: -cx}} />
     </Freeze>
+    {HDR[src]?.(t) && <div style={{position: 'absolute', left: 0, top: 0, width: 300, height: 36, background: C.brand}} />}
   </div>
 );
 

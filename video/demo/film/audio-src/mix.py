@@ -86,7 +86,7 @@ def put(sig, t, db, align='start'):
     s = max(0, s); e = min(N, s + len(sig)); sfx[s:e] += sig[:e - s] * g
 W = whoosh()
 # whoosh peaks land on the cut frame
-for i, db in [(15, -27), (28, -29), (34, -28), (56, -25), (88, -26), (127, -30), (131, -29), (160, -26), (184, -27), (193, -29)]:
+for i, db in [(15, -27), (28, -29), (34, -28), (56, -27), (88, -28), (127, -32), (131, -31), (160, -28), (184, -29), (193, -30)]:
     put(W, fr(B(i)) + 0.02, db, 'peak')
 put(whoosh(1.4, 180, 1600, 0.8), fr(B(48)) + 0.05, -25, 'peak')  # reveal: slow air
 put(swell(BEAT * 4), fr(B(140)), -30, 'end')                       # into the silent beat
@@ -100,6 +100,11 @@ for c in [4.07, 7.7]: put(tick(), a + c - 1.64, -30)
 put(tick(), fr(B(141)) + (7.68 - 8.83), -28)                       # the Check click before the silent beat
 a = fr(B(160))
 for c in [12.9, 18.07, 20.43, 22.8, 25.17]: put(tick(2100), a + c - 11.8, -31)
+
+# before the reveal the SFX are heard "through the door" too, like the music
+cut = int(bt(48) * SR)
+sos = butter(2, 1600, 'low', fs=SR, output='sos')
+sfx[:cut] = np.stack([sosfilt(sos, sfx[:cut, ch]) for ch in range(2)], 1) * 1.4
 
 # small room
 ir_n = int(0.7 * SR); ti = np.arange(ir_n) / SR
