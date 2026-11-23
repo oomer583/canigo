@@ -55,6 +55,8 @@ export function forProfile(records, profile) {
     out.undated = true
   }
   if (!profile) return out
+  // "Not wheelchair accessible" is the source's wording. For anyone who can't use steps, say it about them.
+  if (out.tone === 'no' && base.status === 'no' && profile.steps === 0) out.title = "This entrance doesn't work for you"
 
   const measured = records.filter((r) => !r.ai)
   const door = measured.map((r) => r.doorWidthCm).find((v) => typeof v === 'number')

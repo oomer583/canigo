@@ -305,7 +305,7 @@ export default function App() {
 
   async function runCategory(category, { inCity = false, km = null, understood = null } = {}) {
     const ctrl = freshRequest()
-    if (!understood) setQuery(category.label)
+    if (!understood) setQuery(t(category.label))
     setState('loading')
     setPlace(null)
     setPhoto(null)

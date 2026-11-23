@@ -17,7 +17,7 @@ function usedKeys() {
   PROFILES.forEach((p) => keys.add(p.label))
   CATEGORIES.forEach((c) => keys.add(c.label))
   Object.values(STATUS).forEach((s) => keys.add(s.label))
-  ;['A street photo suggests steps', 'A street photo suggests no steps', 'Sources disagree', 'You may not fit through the door', 'Steps at the entrance', 'Probably, with some effort',
+  ;['A street photo suggests steps', 'A street photo suggests no steps', 'Sources disagree', "This entrance doesn't work for you", 'You may not fit through the door', 'Steps at the entrance', 'Probably, with some effort',
     'Volunteer, not verified', 'Street photo, AI estimate', 'you could get in', 'you could not get in', 'it was partly accessible'].forEach((k) => keys.add(k))
   return [...keys].filter((k) => !k.startsWith('{') || k.includes(' '))
 }

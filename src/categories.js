@@ -1,11 +1,11 @@
 // "I want a coffee": search by what you need, not by a name.
 // tags: OpenStreetMap amenity/shop/tourism values (also used by accessibility.cloud categories).
 export const CATEGORIES = [
-  { id: 'coffee', label: 'Coffee', tags: ['cafe', 'coffee'], words: ['coffee', 'cafe', 'café', 'kafe', 'kofe', 'qəhvə', 'qehve', 'kahve', 'кофе', 'кафе'] },
+  { id: 'coffee', label: 'Café', tags: ['cafe', 'coffee'], words: ['coffee', 'cafe', 'café', 'kafe', 'kofe', 'qəhvə', 'qehve', 'kahve', 'кофе', 'кафе'] },
   { id: 'food', label: 'Food', tags: ['restaurant', 'fast_food', 'food_court'], words: ['food', 'restaurant', 'eat', 'yemek', 'restoran', 'yemək', 'ресторан', 'еда'] },
   { id: 'pharmacy', label: 'Pharmacy', tags: ['pharmacy', 'chemist'], words: ['pharmacy', 'apteka', 'aptek', 'eczane', 'аптека'] },
   { id: 'toilet', label: 'Toilet', tags: ['toilets'], words: ['toilet', 'toilets', 'wc', 'tualet', 'tuvalet', 'туалет'] },
-  { id: 'shop', label: 'Groceries', tags: ['supermarket', 'convenience', 'grocery'], words: ['supermarket', 'market', 'grocery', 'groceries', 'bazar', 'magaza', 'mağaza', 'магазин', 'супермаркет'] },
+  { id: 'shop', label: 'Groceries', tags: ['supermarket', 'convenience', 'grocery'], words: ['supermarket', 'market', 'grocery', 'groceries', 'bazar', 'magaza', 'mağaza', 'магазин', 'супермаркет', 'продукты'] },
   { id: 'health', label: 'Hospital', tags: ['hospital', 'clinic', 'doctors', 'doctor'], words: ['hospital', 'clinic', 'doctor', 'xəstəxana', 'xestexana', 'poliklinika', 'klinika', 'hastane', 'klinik', 'больница', 'клиника', 'поликлиника'] },
   { id: 'museum', label: 'Museum', tags: ['museum', 'gallery'], words: ['museum', 'muzey', 'müze', 'музей'] }
 ]

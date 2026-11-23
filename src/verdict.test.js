@@ -67,3 +67,14 @@ describe('AI photo records', () => {
     expect(out.aiOnly).toBe(true)
   })
 })
+
+describe('red answer speaks about the person', () => {
+  it('says the entrance does not work for someone who cannot use steps', () => {
+    const out = forProfile([{ source: 'osm', status: 'no', updatedAt: '2025-01-01' }], { id: 'walker', widthCm: 75, steps: 0 })
+    expect(out.title).toBe("This entrance doesn't work for you")
+  })
+  it('keeps the source wording when the person can manage some steps', () => {
+    const out = forProfile([{ source: 'osm', status: 'no', updatedAt: '2025-01-01' }], { id: 'crutches', widthCm: 70, steps: 2 })
+    expect(out.title).toBe('Not wheelchair accessible')
+  })
+})
