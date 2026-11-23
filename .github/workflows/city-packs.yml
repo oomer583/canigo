@@ -26,13 +26,14 @@ jobs:
           set -euo pipefail
           mkdir -p work public/packs
           # "pbf" in cities.json is a Geofabrik region id; look up its download URL.
-          curl -sSfL --retry 5 --retry-all-errors --retry-delay 20 -o work/index.json https://download.geofabrik.de/index-v1-nogeom.json
+          curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 5 --retry-all-errors --retry-delay 20 -o work/index.json https://download.geofabrik.de/index-v1-nogeom.json
           for pbf in $(jq -r '.[].pbf' scripts/cities.json | sort -u); do
             url=$(jq -r --arg id "$pbf" '.features[] | select(.properties.id == $id) | .properties.urls.pbf' work/index.json)
             echo "Region $pbf -> $url"
             file="work/$pbf.osm.pbf"
-            if [ -z "$url" ] || ! curl -sSfL --retry 5 --retry-all-errors --retry-delay 20 -o "$file" "$url"; then
+            if [ -z "$url" ] || ! curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 5 --retry-all-errors --retry-delay 20 -o "$file" "$url"; then
               echo "::warning::Could not download Geofabrik region $pbf, skipping its cities"
+              curl -sIL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" "$url" | grep -iE "^(HTTP|server|location|retry-after)" || true
               echo "$pbf" >> work/skipped.txt
               continue
             fi
