@@ -303,13 +303,15 @@ export default function App() {
       note = `You are outside ${city.name}, so this list starts from the centre of ${city.name}.`
     }
     try {
+      const suits = (p) => forProfile(p.records, profile).tone !== 'no'
       if (understood) note = [`Understood as: ${category.label.toLowerCase()}${km ? ` within ${km} km` : ''}.`, note].filter(Boolean).join(' ')
       let items = await findNearby(category, at, { city: useCity, profile, radius: km ? km * 1000 : undefined, signal: ctrl.signal })
       // Nothing close: widen step by step, and say so. A distance the user gave is kept.
+      // Far away, only places you can get into are worth listing: a red place 24 km away helps nobody.
       for (const step of km ? [] : [5, 25]) {
         if (items.length || ctrl.signal.aborted) break
-        items = await findNearby(category, at, { city: useCity, profile, radius: step * 1000, signal: ctrl.signal })
-        if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${step} km.`].filter(Boolean).join(' ')
+        items = (await findNearby(category, at, { city: useCity, profile, radius: step * 1000, signal: ctrl.signal })).filter(suits)
+        if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${step} km and shows only places that work for you.`].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
       const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
