@@ -25,9 +25,20 @@ function Recenter({ at }) {
   return null
 }
 
-function ProfilePicker({ current, onPick }) {
+function ProfilePicker({ current, onPick, onDemo }) {
   return (
     <div className="picker">
+      {!current && (
+        <section className="intro">
+          <h2>Steps, ramps, door width: know before you go.</h2>
+          <ol>
+            <li>Tell CanIGo how you get around.</li>
+            <li>Pick your city.</li>
+            <li>Search a place, or tap what you need. It tells you if the entrance works for you.</li>
+          </ol>
+          <button className="button ghost" onClick={onDemo}>Just looking? See an example in Amsterdam</button>
+        </section>
+      )}
       <h2>How do you get around?</h2>
       <p>CanIGo checks doors and steps against what you need. You can change this any time.</p>
       <div className="choices">
@@ -334,6 +345,27 @@ export default function App() {
   }
 
 
+  // One tap for judges and first-time visitors: walker, Amsterdam, Anne Frank Huis.
+  const [demo, setDemo] = useState(false)
+  function startDemo() {
+    const p = PROFILES.find((x) => x.id === 'walker') || PROFILES[0]
+    const ams = { id: 'amsterdam', name: 'Amsterdam', country: 'Netherlands', bbox: [4.72, 52.27, 5.08, 52.43] }
+    setProfile(p)
+    saveProfile(p)
+    setCity(ams)
+    saveCity(ams)
+    setPicking(false)
+    setPickingCity(false)
+    setQuery('Anne Frank Huis')
+    setDemo(true)
+  }
+  useEffect(() => {
+    if (demo && city?.id === 'amsterdam' && query === 'Anne Frank Huis') {
+      setDemo(false)
+      onSearch({ preventDefault() {} })
+    }
+  }, [demo, city, query]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function pick(p) {
     const first = !profile
     setProfile(p)
@@ -449,7 +481,7 @@ export default function App() {
       </header>
 
       {picking ? (
-        <ProfilePicker current={profile} onPick={pick} />
+        <ProfilePicker current={profile} onPick={pick} onDemo={startDemo} />
       ) : pickingCity ? (
         <CityPicker current={city} onPick={pickCity} />
       ) : (
