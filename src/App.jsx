@@ -11,6 +11,7 @@ import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
 import { findNearby, uncheckedNearby, currentPosition, searchCityPacks } from './nearby.js'
+import { looksLikeSentence, understand } from './understand.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
@@ -276,9 +277,9 @@ export default function App() {
     return ctrl
   }
 
-  async function runCategory(category, { inCity = false } = {}) {
+  async function runCategory(category, { inCity = false, km = null, understood = null } = {}) {
     const ctrl = freshRequest()
-    setQuery(category.label)
+    if (!understood) setQuery(category.label)
     setState('loading')
     setPlace(null)
     setPhoto(null)
@@ -302,15 +303,16 @@ export default function App() {
       note = `You are outside ${city.name}, so this list starts from the centre of ${city.name}.`
     }
     try {
-      let items = await findNearby(category, at, { city: useCity, profile, signal: ctrl.signal })
-      // Nothing close: widen step by step, and say so.
-      for (const km of [5, 25]) {
+      if (understood) note = [`Understood as: ${category.label.toLowerCase()}${km ? ` within ${km} km` : ''}.`, note].filter(Boolean).join(' ')
+      let items = await findNearby(category, at, { city: useCity, profile, radius: km ? km * 1000 : undefined, signal: ctrl.signal })
+      // Nothing close: widen step by step, and say so. A distance the user gave is kept.
+      for (const step of km ? [] : [5, 25]) {
         if (items.length || ctrl.signal.aborted) break
-        items = await findNearby(category, at, { city: useCity, profile, radius: km * 1000, signal: ctrl.signal })
-        if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${km} km.`].filter(Boolean).join(' ')
+        items = await findNearby(category, at, { city: useCity, profile, radius: step * 1000, signal: ctrl.signal })
+        if (items.length) note = [note, `Nothing checked close to you, so this list goes up to ${step} km.`].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
-      const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items })
+      const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
       if (ctrl.signal.aborted) return
       setList({ category, items, unchecked, note, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
       setState('list')
@@ -359,9 +361,17 @@ export default function App() {
     setState('loading')
     setPlace(null)
     setPhoto(null)
+    let name = query
+    // A sentence the word match can't read: AI turns it into a category or a place name.
+    if (looksLikeSentence(query)) {
+      const intent = await understand(query, ctrl.signal)
+      if (ctrl.signal.aborted) return
+      if (intent?.category) return runCategory(intent.category, { km: intent.km, understood: query })
+      if (intent?.name) name = intent.name
+    }
     try {
-      let [target] = await search(query, ctrl.signal, city)
-      if (!target && city) target = await searchCityPacks(city, withoutCity(query, city.name))
+      let [target] = await search(name, ctrl.signal, city)
+      if (!target && city) target = await searchCityPacks(city, withoutCity(name, city.name))
       if (!target) {
         setError(city ? `No place with that name found in ${city.name}. Check the spelling, or change the city at the top.` : 'No place found with that name. Try adding the city.')
         setState('error')
