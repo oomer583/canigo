@@ -31,12 +31,21 @@ jobs:
             url=$(jq -r --arg id "$pbf" '.features[] | select(.properties.id == $id) | .properties.urls.pbf' work/index.json)
             echo "Region $pbf -> $url"
             file="work/$pbf.osm.pbf"
-            if [ -z "$url" ] || ! curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 5 --retry-all-errors --retry-delay 20 -o "$file" "$url"; then
+            ok=""
+            if [ -n "$url" ]; then
+              # "-latest" sometimes redirects to a mirror that does not have the file yet; fall back to dated files.
+              for try in "$url" $(for n in 1 2 3; do echo "${url/-latest/-$(date -u -d "-$n day" +%y%m%d)}"; done); do
+                if curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 2 --retry-all-errors --retry-delay 15 -o "$file" "$try"; then ok="$try"; break; fi
+                echo "Failed: $try"
+                curl -sIL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" "$try" | tr -d '\r' | head -20 || true
+              done
+            fi
+            if [ -z "$ok" ]; then
               echo "::warning::Could not download Geofabrik region $pbf, skipping its cities"
-              curl -sIL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" "$url" | grep -iE "^(HTTP|server|location|retry-after)" || true
               echo "$pbf" >> work/skipped.txt
               continue
             fi
+            echo "Downloaded $ok"
             for id in $(jq -r --arg p "$pbf" '.[] | select(.pbf == $p) | .id' scripts/cities.json); do
               bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
               osmium extract -b "$bbox" "$file" -o "work/$id.pbf" --overwrite
