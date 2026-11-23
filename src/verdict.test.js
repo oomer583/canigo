@@ -11,12 +11,19 @@ describe('combine', () => {
     expect(combine([r('unknown')]).status).toBe('unknown')
   })
 
-  it('lets the newest record win and flags the disagreement', () => {
-    const out = combine([r('yes', { updatedAt: '2023-01-01', source: 'osm' }), r('no', { updatedAt: '2025-06-01', source: 'photo' })])
-    expect(out.status).toBe('no')
-    expect(out.headline.source).toBe('photo')
-    expect(out.conflict).toBe(true)
+  it('lets the newest record win; an opposite record two years older is not a disagreement', () => {
+    const out = combine([r('no', { updatedAt: '2024-01-26', source: 'old' }), r('yes', { updatedAt: '2026-07-27', source: 'new' })])
+    expect(out.status).toBe('yes')
+    expect(out.headline.source).toBe('new')
+    expect(out.conflict).toBe(false)
+    expect(out.older.source).toBe('old')
     expect(out.others).toHaveLength(1)
+  })
+
+  it('calls it a disagreement when opposite records are less than a year apart', () => {
+    const out = forProfile([r('no', { updatedAt: '2026-02-01' }), r('yes', { updatedAt: '2026-07-27' })], wheelchair)
+    expect(out.conflict).toBe(true)
+    expect(out.title).toBe('Sources disagree')
   })
 })
 

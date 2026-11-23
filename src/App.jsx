@@ -163,7 +163,12 @@ function Answer({ place, profile, photo, city, onAdded, onWrong }) {
       {v.headline?.volunteer && <p className="conflict">Added by a volunteer and not verified. Ask them before you go if you are unsure.</p>}
       {v.conflict && (
         <p className="conflict">
-          {v.undated ? 'Some sources say yes, some say no, and none is dated. Ask them before you go.' : 'Sources disagree. The newest one leads; check the others below.'}
+          Sources from about the same time disagree. Ask them before you go.
+        </p>
+      )}
+      {v.older && (
+        <p className="detail">
+          An older source{v.older.updatedAt ? ` (${v.older.updatedAt.slice(0, 4)})` : ''} said {v.older.status === 'yes' ? 'you could get in' : v.older.status === 'no' ? 'you could not get in' : 'it was partly accessible'}. The newest information leads, because places change.
         </p>
       )}
       {v.status === 'unknown' && <p className="detail">No source has checked this entrance yet.</p>}

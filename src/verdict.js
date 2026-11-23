@@ -11,6 +11,7 @@ export const STATUS = {
 }
 
 const KNOWN = new Set(['yes', 'partial', 'no'])
+const YEAR = 365 * 24 * 3600 * 1000
 
 function time(record) {
   const t = record.updatedAt ? Date.parse(record.updatedAt) : NaN
@@ -29,8 +30,13 @@ export function combine(records) {
   const sorted = [...known].sort((a, b) => time(b) - time(a))
   const headline = sorted[0]
   const conflict = new Set(known.map((r) => r.status)).size > 1
+  // A disagreement only counts as real when the opposite record is about as recent (within a year)
+  // or undated. An older opposite record just means the place has probably changed since.
+  const opposite = known.filter((r) => r.status !== headline.status)
+  const close = opposite.some((r) => time(r) === -Infinity || time(headline) === -Infinity || time(headline) - time(r) < YEAR)
+  const older = opposite.length && !close ? opposite.sort((a, b) => time(b) - time(a))[0] : null
   const others = records.filter((r) => r !== headline)
-  return { status: headline.status, headline, others, conflict }
+  return { status: headline.status, headline, others, conflict: conflict && close, older }
 }
 
 // Personal answer: the combined status, sharpened by the user's profile
@@ -38,12 +44,12 @@ export function combine(records) {
 export function forProfile(records, profile) {
   const base = combine(records)
   const out = { ...base, tone: base.status, title: STATUS[base.status].label, reasons: [] }
-  // Sources disagree and none is dated: do not pretend to know which is right.
+  // Sources disagree at about the same time (or undated): do not pretend to know which is right.
   if (base.headline?.ai) {
     out.tone = 'partial'
     out.title = base.status === 'no' ? 'A street photo suggests steps' : 'A street photo suggests no steps'
     out.aiOnly = true
-  } else if (base.conflict && !base.headline?.updatedAt) {
+  } else if (base.conflict) {
     out.tone = 'partial'
     out.title = 'Sources disagree'
     out.undated = true
