@@ -324,16 +324,6 @@ export default function App() {
     loadPhoto(item, ctrl)
   }
 
-  function startOver() {
-    try {
-      localStorage.removeItem('canigo.profile')
-      localStorage.removeItem('canigo.city')
-      localStorage.removeItem('canigo.volunteer')
-    } catch {
-      // nothing saved
-    }
-    location.reload()
-  }
 
   function pick(p) {
     const first = !profile
@@ -473,7 +463,7 @@ export default function App() {
                 {list.note && <p className="hint small">{list.note}</p>}
                 {list.items.length === 0 && list.unchecked.length === 0 && (
                   <>
-                    <p className="hint">No {list.category.label.toLowerCase()} places with entrance information within 25 km yet. Places nobody has checked are not shown.</p>
+                    <p className="hint">No {list.category.label.toLowerCase()} places found near you yet.</p>
                     {list.centre && (
                       <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
                         Show {list.category.label.toLowerCase()} in central {list.centre.name}
@@ -537,7 +527,6 @@ export default function App() {
             </div>
           )}
           <footer className="foot">
-            <button className="link" onClick={startOver}>Start over</button>
             <p className="credits">Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).</p>
           </footer>
         </main>
