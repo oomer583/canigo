@@ -1,0 +1,1 @@
+I'm 15, I live in Baku and I walk with a walker. Map apps only say "wheelchair: yes/no" with no source, so I built CanIGo: it checks a building's steps and door width against how *you* get around, and shows where every answer comes from and when. Same door, different answer. canigo-app.pages.dev
