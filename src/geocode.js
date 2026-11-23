@@ -12,19 +12,34 @@ export function queryVariants(query) {
   return [...new Set(out)]
 }
 
-export async function search(query, signal, near = null) {
-  const exact = await nominatim(query, signal)
+// The chosen city always wins: "Hemingway Baku" must never open a Hemingway in California.
+// The city name is dropped from the query and both services are limited to the city's box.
+export function withoutCity(query, cityName) {
+  if (!cityName) return query.trim()
+  const re = new RegExp(`[\\s,]*\\b${cityName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[\\s,]*`, 'gi')
+  return query.replace(re, ' ').replace(/\s+/g, ' ').trim() || query.trim()
+}
+
+export function inBox(bbox, lat, lng) {
+  return !bbox || (lng >= bbox[0] && lng <= bbox[2] && lat >= bbox[1] && lat <= bbox[3])
+}
+
+export async function search(query, signal, city = null) {
+  const bbox = city?.bbox || null
+  const q = withoutCity(query, city?.name)
+  const keep = (rows) => rows.filter((r) => inBox(bbox, r.lat, r.lng))
+  const exact = keep(await nominatim(q, signal, bbox))
   if (exact.length) return exact
-  for (const q of queryVariants(query)) {
-    const rows = await photon(q, signal, near)
+  for (const v of queryVariants(q)) {
+    const rows = keep(await photon(v, signal, bbox))
     if (rows.length) return rows
   }
   return []
 }
 
-async function photon(query, signal, near) {
-  const bias = near ? `&lat=${near.lat}&lon=${near.lng}` : ''
-  const res = await fetch(`https://photon.komoot.io/api/?limit=5&q=${encodeURIComponent(query)}${bias}`, { signal })
+async function photon(query, signal, bbox) {
+  const area = bbox ? `&bbox=${bbox.join(',')}&lat=${(bbox[1] + bbox[3]) / 2}&lon=${(bbox[0] + bbox[2]) / 2}` : ''
+  const res = await fetch(`https://photon.komoot.io/api/?limit=5&q=${encodeURIComponent(query)}${area}`, { signal })
   if (!res.ok) return []
   const { features = [] } = await res.json()
   return features
@@ -39,8 +54,9 @@ async function photon(query, signal, near) {
     }))
 }
 
-async function nominatim(query, signal) {
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&extratags=1&q=${encodeURIComponent(query)}`
+async function nominatim(query, signal, bbox) {
+  const area = bbox ? `&bounded=1&viewbox=${bbox[0]},${bbox[3]},${bbox[2]},${bbox[1]}` : ''
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&extratags=1&q=${encodeURIComponent(query)}${area}`
   const res = await fetch(url, { signal, headers: { 'Accept-Language': 'en' } })
   if (!res.ok) throw new Error(`search failed (${res.status})`)
   const rows = await res.json()

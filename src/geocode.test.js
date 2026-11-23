@@ -14,3 +14,20 @@ describe('queryVariants', () => {
     expect(queryVariants('Rijksmuseum')).toEqual(['Rijksmuseum'])
   })
 })
+
+import { withoutCity, inBox } from './geocode.js'
+
+describe('chosen city wins', () => {
+  const baku = [49.65, 40.3, 50.1, 40.55]
+  it('drops the city name from the query', () => {
+    expect(withoutCity('Hemingway Baku', 'Baku')).toBe('Hemingway')
+    expect(withoutCity('Rijksmuseum, Amsterdam', 'Amsterdam')).toBe('Rijksmuseum')
+    expect(withoutCity('Bakuhan', 'Baku')).toBe('Bakuhan')
+    expect(withoutCity('Baku', 'Baku')).toBe('Baku')
+  })
+  it('rejects places outside the city', () => {
+    expect(inBox(baku, 35.32, -119.1)).toBe(false) // Bakersfield, California
+    expect(inBox(baku, 40.41, 49.87)).toBe(true)
+    expect(inBox(null, 35.32, -119.1)).toBe(true)
+  })
+})

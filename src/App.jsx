@@ -365,10 +365,9 @@ export default function App() {
     setPlace(null)
     setPhoto(null)
     try {
-      const near = city ? { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 } : null
-      const [target] = await search(query, ctrl.signal, near)
+      const [target] = await search(query, ctrl.signal, city)
       if (!target) {
-        setError('No place found with that name. Try adding the city.')
+        setError(city ? `No place with that name found in ${city.name}. Check the spelling, or change the city at the top.` : 'No place found with that name. Try adding the city.')
         setState('error')
         return
       }
