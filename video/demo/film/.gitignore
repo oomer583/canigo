@@ -1,0 +1,7 @@
+node_modules
+out
+# Pixabay licence forbids redistributing the track on its own: keep audio out of the public repo
+public/audio
+audio-src/*.wav
+# re-record with video/rec.mjs (see README)
+public/clips
