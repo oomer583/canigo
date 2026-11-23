@@ -5,6 +5,10 @@ const AID = {
     manual: 'a manual wheelchair', power: 'a power wheelchair', wide: 'a wide wheelchair',
     walker: 'a walker (gait trainer)', stroller: 'a stroller', 'steps-hard': null, crutches: 'crutches'
   },
+  tr: {
+    manual: 'manuel tekerlekli sandalye', power: 'akülü tekerlekli sandalye', wide: 'geniş tekerlekli sandalye',
+    walker: 'yürüteç', stroller: 'bebek arabası', 'steps-hard': null, crutches: 'koltuk değneği'
+  },
   az: {
     manual: 'əl ilə idarə olunan əlil arabasından', power: 'elektrikli əlil arabasından', wide: 'geniş əlil arabasından',
     walker: 'yeriş aparatından (walker)', stroller: 'uşaq arabasından', 'steps-hard': null, crutches: 'qoltuq ağacından'
@@ -17,18 +21,24 @@ const AID = {
 
 export const LANGS = [
   { id: 'en', label: 'English' },
+  { id: 'tr', label: 'Türkçe' },
   { id: 'az', label: 'Azərbaycanca' },
   { id: 'ru', label: 'Русский' }
 ]
 
 export function defaultLang(city) {
-  return city?.id === 'baku' ? 'az' : 'en'
+  return { baku: 'az', istanbul: 'tr' }[city?.id] || 'en'
 }
 
 export function askText(profile, placeName, lang = 'en') {
   const aid = AID[lang]?.[profile.id]
   const n = profile.steps
   const w = profile.widthCm
+  if (lang === 'tr') {
+    const who = aid ? `${aid[0].toUpperCase() + aid.slice(1)} kullanıyorum ve kapının en az ${w} cm genişliğinde olması gerekiyor.` : `Basamak çıkmakta zorlanıyorum ve kapının en az ${w} cm genişliğinde olması gerekiyor.`
+    const steps = n === 0 ? 'Basamak çıkamıyorum.' : `En fazla ${n} basamak çıkabiliyorum.`
+    return `Merhaba. ${placeName} adresine gelmek istiyorum. ${who} ${steps} Girişinizde basamak var mı ve kapı ne kadar geniş? Teşekkür ederim.`
+  }
   if (lang === 'az') {
     const who = aid ? `Mən ${aid} istifadə edirəm və qapının eni ən azı ${w} sm olmalıdır.` : `Pilləkənə çıxmaqda çətinlik çəkirəm, qapının eni ən azı ${w} sm olmalıdır.`
     const steps = n === 0 ? 'Pilləkəndən istifadə edə bilmirəm.' : `Ən çoxu ${n} pilləkən qalxa bilirəm.`

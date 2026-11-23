@@ -62,20 +62,20 @@ export function forProfile(records, profile) {
 
   if (typeof door === 'number') {
     if (door < profile.widthCm) {
-      out.reasons.push(`The door is ${door} cm. You need about ${profile.widthCm} cm.`)
+      out.reasons.push({ key: 'The door is {door} cm. You need about {need} cm.', vars: { door, need: profile.widthCm } })
       out.tone = 'no'
       out.title = 'You may not fit through the door'
     } else {
-      out.reasons.push(`The door is ${door} cm. You need about ${profile.widthCm} cm.`)
+      out.reasons.push({ key: 'The door is {door} cm. You need about {need} cm.', vars: { door, need: profile.widthCm } })
     }
   }
   if (typeof steps === 'number') {
     if (steps > profile.steps) {
-      out.reasons.push(`${steps} step${steps > 1 ? 's' : ''} at the entrance.`)
+      out.reasons.push({ key: steps === 1 ? '1 step at the entrance.' : '{n} steps at the entrance.', vars: { n: steps } })
       out.tone = 'no'
       out.title = 'Steps at the entrance'
     } else if (steps > 0) {
-      out.reasons.push(`${steps} step${steps > 1 ? 's' : ''} at the entrance. You said you can manage that.`)
+      out.reasons.push({ key: steps === 1 ? '1 step at the entrance. You said you can manage that.' : '{n} steps at the entrance. You said you can manage that.', vars: { n: steps } })
       if (out.tone !== 'no') {
         out.tone = 'yes'
         out.title = 'You can get in'
