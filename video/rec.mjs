@@ -2,7 +2,8 @@
 // Offline here: no map tiles (map hidden), no geocoder (city packs answer), /api/understand answered with the real API's schema.
 import puppeteer from 'puppeteer-core'
 import { spawn } from 'child_process'
-const W = 960, H = 540, DPR = 2, FPS = 30
+const W = +(process.env.REC_W || 960), H = +(process.env.REC_H || 540), DPR = 2, FPS = 30
+const OUT = process.env.REC_OUT || 'clips'
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 async function session(name, fn, opts = {}) {
   const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: false, defaultViewport: null, ignoreDefaultArgs: ['--enable-automation'],
@@ -22,7 +23,7 @@ async function session(name, fn, opts = {}) {
   await p.evaluateOnNewDocument((profile) => {
     localStorage.setItem('canigo.lang', 'en')
     if (profile) localStorage.setItem('canigo.profile', JSON.stringify(profile)); else localStorage.removeItem('canigo.profile')
-    const css = '.leaflet-container,.map{display:none!important} #cur{position:fixed;z-index:99999;width:22px;height:22px;margin:-3px 0 0 -3px;pointer-events:none;transition:transform .12s} #cur svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))} .ripple{position:fixed;z-index:99998;width:16px;height:16px;margin:-8px;border-radius:50%;background:rgba(242,193,78,.55);pointer-events:none;animation:rp .6s ease-out forwards}@keyframes rp{to{transform:scale(4);opacity:0}}'
+    const css = '.leaflet-container,.map{display:none!important} p.warn:has(code){display:none!important} #cur{position:fixed;z-index:99999;width:22px;height:22px;margin:-3px 0 0 -3px;pointer-events:none;transition:transform .12s} #cur svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))} .ripple{position:fixed;z-index:99998;width:16px;height:16px;margin:-8px;border-radius:50%;background:rgba(242,193,78,.55);pointer-events:none;animation:rp .6s ease-out forwards}@keyframes rp{to{transform:scale(4);opacity:0}}'
     addEventListener('DOMContentLoaded', () => {
       const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s)
       const c = document.createElement('div'); c.id = 'cur'; c.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 2l7 19 2.5-7.5L20 11z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
@@ -51,7 +52,7 @@ async function session(name, fn, opts = {}) {
   const scroll = async (dy, ms = 1200) => { const n = Math.round(ms / 16); for (let i = 0; i < n; i++) { await p.mouse.wheel({ deltaY: dy / n }); await sleep(16) } }
   await sleep(300)
   const rec = spawn('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'x11grab', '-draw_mouse', '0', '-framerate', String(FPS), '-video_size', `${W * DPR}x${H * DPR}`, '-i', process.env.DISPLAY + '.0+0,0',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-pix_fmt', 'yuv420p', `clips/${name}.mp4`], { stdio: ['pipe', 'inherit', 'inherit'] })
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-pix_fmt', 'yuv420p', `${OUT}/${name}.mp4`], { stdio: ['pipe', 'inherit', 'inherit'] })
   const t0 = Date.now()
   await sleep(500)
   await fn({ p, click, type, move, scroll, el, sleep })
