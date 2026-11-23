@@ -78,3 +78,17 @@ describe('red answer speaks about the person', () => {
     expect(out.title).toBe('Not wheelchair accessible')
   })
 })
+
+describe('counted steps within reach', () => {
+  const sixty6 = [{ source: 'OpenStreetMap', status: 'no', updatedAt: '2025-10-14', steps: 2, doorWidthCm: null }]
+  it('is yellow, not red, for crutches (2 steps allowed)', () => {
+    const out = forProfile(sixty6, { id: 'crutches', widthCm: 70, steps: 2 })
+    expect(out.tone).toBe('partial')
+    expect(out.title).toBe('Probably, with some effort')
+  })
+  it('stays red for a wheelchair', () => {
+    const out = forProfile(sixty6, { id: 'manual', widthCm: 70, steps: 0 })
+    expect(out.tone).toBe('no')
+    expect(out.title).toBe('Steps at the entrance')
+  })
+})

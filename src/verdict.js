@@ -81,6 +81,11 @@ export function forProfile(records, profile) {
       if (out.tone !== 'no') {
         out.tone = 'yes'
         out.title = 'You can get in'
+      } else if (out.title !== 'You may not fit through the door') {
+        // The source says "not wheelchair accessible", but the steps it counted are within what this person
+        // can manage. Not green: the "no" may have another reason. Not red either: that would contradict the line above.
+        out.tone = 'partial'
+        out.title = 'Probably, with some effort'
       }
     }
   }
