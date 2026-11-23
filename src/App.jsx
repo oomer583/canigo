@@ -314,7 +314,7 @@ export default function App() {
       if (ctrl.signal.aborted) return
       const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
       if (ctrl.signal.aborted) return
-      setList({ category, items, unchecked, note, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
+      setList({ category, items, unchecked, note, km, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
       setState('list')
     } catch (err) {
       if (err.name === 'AbortError') return
@@ -479,7 +479,12 @@ export default function App() {
                 {list.category.id === 'health' && <p className="conflict">In an emergency, call 112. Don't wait to check the entrance.</p>}
                 {list.items.length === 0 && list.unchecked.length === 0 && (
                   <>
-                    <p className="hint">No {list.category.label.toLowerCase()} places found near you yet.</p>
+                    <p className="hint">No {list.category.label.toLowerCase()} places found {list.km ? `within ${list.km} km` : 'near you'} yet.</p>
+                    {list.km && list.km < 25 && (
+                      <button className="button ghost" onClick={() => runCategory(list.category, { km: Math.min(25, Math.max(5, list.km * 3)), understood: query })}>
+                        Look up to {Math.min(25, Math.max(5, list.km * 3))} km
+                      </button>
+                    )}
                     {list.centre && (
                       <button className="button ghost" onClick={() => runCategory(list.category, { inCity: true })}>
                         Show {list.category.label.toLowerCase()} in central {list.centre.name}
