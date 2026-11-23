@@ -1,10 +1,12 @@
 // Free sentences go to /api/understand only when the simple word match can't read them.
 import { CATEGORIES } from './categories.js'
 
-// "coffee" or "Rijksmuseum" are handled without AI; "pharmacy within 2 km" or "где поесть рядом" are not.
+// "coffee", "Rijksmuseum" or "Sixty 6" are handled without AI; "pharmacy within 2 km" or "где поесть рядом" are not.
 export function looksLikeSentence(query) {
   const words = query.trim().split(/\s+/).filter(Boolean)
-  return words.length >= 3 || /\d/.test(query) || /\?$/.test(query.trim())
+  // A number alone is not a sentence: "Sixty 6", "Studio 54" and "Cafe 33" are names. A distance is.
+  const distance = /\d+(?:[.,]\d+)?\s*(?:km|m|metre|meter|mile|mi|км|м|kilometr|kilometre|metr)\b/i.test(query)
+  return words.length >= 3 || distance || /\?$/.test(query.trim())
 }
 
 export async function understand(query, signal) {

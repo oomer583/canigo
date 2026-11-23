@@ -6,11 +6,15 @@ describe('looksLikeSentence', () => {
   it('leaves names and single words to the normal search', () => {
     expect(looksLikeSentence('Rijksmuseum')).toBe(false)
     expect(looksLikeSentence('Hemingway Baku')).toBe(false)
+    expect(looksLikeSentence('Sixty 6')).toBe(false)
+    expect(looksLikeSentence('Studio 54')).toBe(false)
   })
   it('sends sentences, distances and questions to AI', () => {
     expect(looksLikeSentence('pharmacy within 2 km')).toBe(true)
     expect(looksLikeSentence('где поесть рядом')).toBe(true)
     expect(looksLikeSentence('toilet?')).toBe(true)
+    expect(looksLikeSentence('cafe 2km')).toBe(true)
+    expect(looksLikeSentence('aptek 500 m')).toBe(true)
   })
 })
 
