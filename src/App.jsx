@@ -396,6 +396,16 @@ export default function App() {
     }
   }, [demo, city, query]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function startOver() {
+    // Back to the first screen. The chosen language stays.
+    try {
+      localStorage.removeItem('canigo.profile')
+    } catch {
+      // nothing saved
+    }
+    location.reload()
+  }
+
   function pick(p) {
     const first = !profile
     setProfile(p)
@@ -621,6 +631,7 @@ export default function App() {
             </div>
           )}
           <footer className="foot">
+            {profile && <button className="link" onClick={startOver}>{t('Start over')}</button>}
             <p className="credits">{t('Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).')}</p>
             <LangPicker value={uiLang} onChange={changeLang} />
           </footer>
