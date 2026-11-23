@@ -38,5 +38,11 @@ export function placesByName(names, query, limit = 5) {
     const n = fold(p.name)
     return words.every((w) => n.includes(w))
   })
-  return hits.sort((a, b) => a.name.length - b.name.length).slice(0, limit)
+  // An exact name beats a shorter partial one ("Anne Frank Huis" must not pick a statue called "Anne Frank").
+  const q = words.join(' ')
+  const rank = (p) => {
+    const n = fold(p.name).split(/[^\p{L}\p{N}]+/u).filter(Boolean).join(' ')
+    return n === q ? 0 : 1
+  }
+  return hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length).slice(0, limit)
 }

@@ -61,8 +61,9 @@ export async function searchCityPacks(city, query) {
     loadPlaces(city.id).catch(() => ({ places: [] }))
   ])
   const names = [
-    ...(osm.elements || []).filter((e) => e.tags?.name && e.lat != null).map((e) => ({
-      name: e.tags.name, label: `${e.tags.name}, ${city.name}`, lat: e.lat, lng: e.lon,
+    // Buildings (ways) carry a centre point instead of lat/lon.
+    ...(osm.elements || []).filter((e) => e.tags?.name && (e.lat ?? e.center?.lat) != null).map((e) => ({
+      name: e.tags.name, label: `${e.tags.name}, ${city.name}`, lat: e.lat ?? e.center.lat, lng: e.lon ?? e.center.lon,
       phone: e.tags.phone || e.tags['contact:phone'] || null, osmWheelchair: e.tags.wheelchair || null
     })),
     ...(ov.places || []).map(([name, lat, lng]) => ({ name, label: `${name}, ${city.name}`, lat, lng, phone: null, osmWheelchair: null }))

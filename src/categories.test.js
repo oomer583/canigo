@@ -75,4 +75,8 @@ describe('hospital category', () => {
     expect(inCategory({ category: 'clinic' }, health)).toBe(true)
     expect(inCategory({ category: 'pharmacy' }, health)).toBe(false)
   })
+  it('prefers an exact name over a shorter partial one', () => {
+    const names = [{ name: 'Anne Frank' }, { name: 'Anne Frank Huis' }, { name: 'Anne Frank Huis Shop' }]
+    expect(placesByName(names, 'Anne Frank Huis')[0].name).toBe('Anne Frank Huis')
+  })
 })

@@ -444,7 +444,11 @@ export default function App() {
       if (intent?.name) name = intent.name
     }
     try {
-      let [target] = await search(name, ctrl.signal, city)
+      // If the geocoder is down or unreachable, fall back to the city packs instead of failing.
+      let [target] = await search(name, ctrl.signal, city).catch((e) => {
+        if (ctrl.signal.aborted) throw e
+        return []
+      })
       if (!target && city) target = await searchCityPacks(city, withoutCity(name, city.name))
       if (!target) {
         setError(city ? t('No place with that name found in {city}. Check the spelling, or change the city at the top.', { city: city.name }) : t('No place found with that name. Try adding the city.'))
