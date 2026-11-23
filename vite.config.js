@@ -10,6 +10,9 @@ export default defineConfig({
       includeAssets: ['icon.svg'],
       workbox: {
         globIgnores: ['packs/**'],
+        navigateFallbackDenylist: [/^\/api\//],
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             // City packs: keep a copy for offline use, refresh it in the background.

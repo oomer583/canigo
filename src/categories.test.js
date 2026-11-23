@@ -48,3 +48,19 @@ describe('unchecked places', () => {
     expect(out[0].records).toEqual([])
   })
 })
+
+import { placesByName, fold } from './sources/places.js'
+
+describe('name search in city packs', () => {
+  const names = [{ name: 'Hemingway Wine & Cocktail Bar' }, { name: 'Elmlər Akademiyası' }, { name: 'Ernest Hemingway Museum' }]
+  it('finds partial names, shortest first', () => {
+    expect(placesByName(names, 'hemingway').map((p) => p.name)).toEqual(['Ernest Hemingway Museum', 'Hemingway Wine & Cocktail Bar'])
+  })
+  it('ignores Azerbaijani letters and case', () => {
+    expect(fold('Elmlər Akademiyası')).toBe('elmler akademiyasi')
+    expect(placesByName(names, 'elmler akademiyasi')[0].name).toBe('Elmlər Akademiyası')
+  })
+  it('needs every word', () => {
+    expect(placesByName(names, 'hemingway pizza')).toEqual([])
+  })
+})

@@ -4,7 +4,7 @@ import { loadPack, packNear, inside } from './sources/cityPack.js'
 import { forProfile } from './verdict.js'
 import { distanceMeters } from './geocode.js'
 import { inCategory, isCannabis } from './categories.js'
-import { loadPlaces, placesNear as overtureNear } from './sources/places.js'
+import { loadPlaces, placesNear as overtureNear, placesByName } from './sources/places.js'
 import { mergePlaces, nameKey } from './merge.js'
 
 const RANK = { yes: 0, partial: 1, unknown: 2, no: 3 }
@@ -52,4 +52,20 @@ export async function uncheckedNearby(category, at, { city, checked = [], radius
   return overtureNear(pack, at, radius, category.tags)
     .filter((p) => !isCannabis(p) && !known.has(nameKey(p.name)) && !checked.some((c) => distanceMeters(c, p) < 25))
     .slice(0, limit)
+}
+
+// Fallback name search in the chosen city's packs. OSM entries carry their wheelchair tag.
+export async function searchCityPacks(city, query) {
+  const [osm, ov] = await Promise.all([
+    loadPack(city.id).catch(() => ({ elements: [] })),
+    loadPlaces(city.id).catch(() => ({ places: [] }))
+  ])
+  const names = [
+    ...(osm.elements || []).filter((e) => e.tags?.name && e.lat != null).map((e) => ({
+      name: e.tags.name, label: `${e.tags.name}, ${city.name}`, lat: e.lat, lng: e.lon,
+      phone: e.tags.phone || e.tags['contact:phone'] || null, osmWheelchair: e.tags.wheelchair || null
+    })),
+    ...(ov.places || []).map(([name, lat, lng]) => ({ name, label: `${name}, ${city.name}`, lat, lng, phone: null, osmWheelchair: null }))
+  ]
+  return placesByName(names, query)[0] || null
 }

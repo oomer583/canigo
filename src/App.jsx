@@ -5,12 +5,12 @@ import { osmNear } from './sources/osm.js'
 import { listCities, loadCity, saveCity, loadPack, packNear, inside } from './sources/cityPack.js'
 import { entrancePhoto, recordFromPhoto } from './sources/streetPhoto.js'
 import { forProfile } from './verdict.js'
-import { search, distanceMeters } from './geocode.js'
+import { search, distanceMeters, withoutCity } from './geocode.js'
 import { mergePlaces, nameKey } from './merge.js'
 import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
-import { findNearby, uncheckedNearby, currentPosition } from './nearby.js'
+import { findNearby, uncheckedNearby, currentPosition, searchCityPacks } from './nearby.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
@@ -365,7 +365,8 @@ export default function App() {
     setPlace(null)
     setPhoto(null)
     try {
-      const [target] = await search(query, ctrl.signal, city)
+      let [target] = await search(query, ctrl.signal, city)
+      if (!target && city) target = await searchCityPacks(city, withoutCity(query, city.name))
       if (!target) {
         setError(city ? `No place with that name found in ${city.name}. Check the spelling, or change the city at the top.` : 'No place found with that name. Try adding the city.')
         setState('error')
