@@ -1,6 +1,6 @@
 // Turkey mirror for CanIGo.
 // pages.dev is blocked in Turkey (TFF decision, 25 Nov 2025), so this Worker serves the same
-// site from canigo.kerimli270.workers.dev by fetching every request from canigo-app.pages.dev.
+// site from canigo.kerimlio270.workers.dev by fetching every request from canigo-app.pages.dev.
 // Paste this into the Cloudflare dashboard: Workers & Pages > canigo > Edit code > Deploy.
 // Note: volunteer rate limits see the Worker, not each visitor, so Turkish visitors share one limit.
 
