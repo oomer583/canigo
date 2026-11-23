@@ -466,6 +466,7 @@ export default function App() {
               <div className="list">
                 <h2>{list.category.label} {list.nearMe ? 'near you' : `in ${city?.name || 'the city centre'}`}</h2>
                 {list.note && <p className="hint small">{list.note}</p>}
+                {list.category.id === 'health' && <p className="conflict">In an emergency, call 112. Don't wait to check the entrance.</p>}
                 {list.items.length === 0 && list.unchecked.length === 0 && (
                   <>
                     <p className="hint">No {list.category.label.toLowerCase()} places found near you yet.</p>

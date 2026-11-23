@@ -64,3 +64,15 @@ describe('name search in city packs', () => {
     expect(placesByName(names, 'hemingway pizza')).toEqual([])
   })
 })
+
+describe('hospital category', () => {
+  it('understands hospital words in four languages', () => {
+    for (const w of ['hospital', 'xəstəxana', 'hastane', 'больница', 'poliklinika near me']) expect(detectCategory(w)?.id).toBe('health')
+  })
+  it('matches hospitals and clinics', () => {
+    const health = CATEGORIES.find((c) => c.id === 'health')
+    expect(inCategory({ category: 'hospital' }, health)).toBe(true)
+    expect(inCategory({ category: 'clinic' }, health)).toBe(true)
+    expect(inCategory({ category: 'pharmacy' }, health)).toBe(false)
+  })
+})

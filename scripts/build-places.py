@@ -18,6 +18,9 @@ CATEGORY = {
     'pharmacy': 'pharmacy', 'drugstore': 'pharmacy', 'pharmacy_or_drugstore': 'pharmacy', 'chemist': 'pharmacy',
     'supermarket': 'supermarket', 'grocery_store': 'supermarket', 'grocery': 'supermarket', 'convenience_store': 'convenience',
     'museum': 'museum', 'art_museum': 'museum', 'history_museum': 'museum', 'art_gallery': 'gallery',
+    'hospital': 'hospital', 'general_hospital': 'hospital', 'emergency_room': 'hospital', 'childrens_hospital': 'hospital',
+    'medical_center': 'clinic', 'clinic': 'clinic', 'urgent_care_clinic': 'clinic', 'health_and_medical': 'clinic',
+    'doctor': 'doctors', 'family_practice': 'doctors', 'general_practitioner': 'doctors',
     'public_toilet': 'toilets', 'restroom': 'toilets', 'toilet': 'toilets',
 }
 

@@ -6,6 +6,7 @@ export const CATEGORIES = [
   { id: 'pharmacy', label: 'Pharmacy', tags: ['pharmacy', 'chemist'], words: ['pharmacy', 'apteka', 'aptek', 'eczane', 'аптека'] },
   { id: 'toilet', label: 'Toilet', tags: ['toilets'], words: ['toilet', 'toilets', 'wc', 'tualet', 'tuvalet', 'туалет'] },
   { id: 'shop', label: 'Groceries', tags: ['supermarket', 'convenience', 'grocery'], words: ['supermarket', 'market', 'grocery', 'groceries', 'bazar', 'magaza', 'mağaza', 'магазин', 'супермаркет'] },
+  { id: 'health', label: 'Hospital', tags: ['hospital', 'clinic', 'doctors', 'doctor'], words: ['hospital', 'clinic', 'doctor', 'xəstəxana', 'xestexana', 'poliklinika', 'klinika', 'hastane', 'klinik', 'больница', 'клиника', 'поликлиника'] },
   { id: 'museum', label: 'Museum', tags: ['museum', 'gallery'], words: ['museum', 'muzey', 'müze', 'музей'] }
 ]
 
