@@ -32,8 +32,8 @@ describe('dedupeRecords', () => {
   it('drops the OSM mirror when OpenStreetMap says the same', () => {
     expect(dedupeRecords([mirror, osm, { ...mirror }])).toEqual([osm])
   })
-  it('keeps the mirror when it disagrees or OSM is missing', () => {
+  it('keeps the mirror only when OSM itself is missing', () => {
     expect(dedupeRecords([mirror])).toHaveLength(1)
-    expect(dedupeRecords([osm, { ...mirror, status: 'yes' }])).toHaveLength(2)
+    expect(dedupeRecords([osm, { ...mirror, status: 'yes' }])).toEqual([osm])
   })
 })
