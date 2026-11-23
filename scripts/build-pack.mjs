@@ -20,8 +20,19 @@ export function centre(geometry) {
   return { lat: +lat.toFixed(6), lon: +lng.toFixed(6) }
 }
 
+// Stops, stations, platforms, roads and car parks share names with the places next to them
+// (the "Rijksmuseum" tram stop), but their wheelchair tag says nothing about the place's entrance.
+const NOT_A_PLACE = ['public_transport', 'railway', 'highway', 'aeroway', 'barrier']
+const NOT_A_PLACE_AMENITY = new Set(['parking', 'parking_entrance', 'bicycle_parking', 'bench', 'charging_station', 'fuel', 'taxi', 'ferry_terminal'])
+
+export function isPlace(p) {
+  if (NOT_A_PLACE.some((k) => p[k] != null && !(k === 'highway' && p.entrance))) return false
+  return !NOT_A_PLACE_AMENITY.has(p.amenity)
+}
+
 export function toElement(feature) {
   const p = feature.properties || {}
+  if (!isPlace(p)) return null
   const tags = {}
   for (const k of KEEP) if (p[k] != null) tags[k] = String(p[k])
   const useful = tags.wheelchair || tags.entrance || tags.door || tags['door:width'] || tags.step_count || tags.ramp

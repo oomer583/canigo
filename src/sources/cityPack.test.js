@@ -44,3 +44,21 @@ describe('timestamps', () => {
     expect(packNear(pack, 52, 4).places[0].record.updatedAt).toBe('2024-05-01T00:00:00.000Z')
   })
 })
+
+import { toElement as packElement } from '../../scripts/build-pack.mjs'
+
+describe('pack builder skips things that are not places', () => {
+  const f = (props) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [4.886, 52.361] }, properties: { '@type': 'node', '@id': 1, ...props } })
+  it('drops the Rijksmuseum tram stop', () => {
+    expect(packElement(f({ name: 'Rijksmuseum', railway: 'tram_stop', public_transport: 'stop_position', wheelchair: 'no' }))).toBeNull()
+  })
+  it('drops bus stops and car parks', () => {
+    expect(packElement(f({ name: 'Rijksmuseum', highway: 'bus_stop', wheelchair: 'yes' }))).toBeNull()
+    expect(packElement(f({ name: 'Q-Park', amenity: 'parking', wheelchair: 'yes' }))).toBeNull()
+  })
+  it('keeps the museum and its entrances', () => {
+    expect(packElement(f({ name: 'Rijksmuseum', tourism: 'museum', wheelchair: 'yes' }))).not.toBeNull()
+    expect(packElement(f({ entrance: 'main', wheelchair: 'yes' }))).not.toBeNull()
+    expect(packElement(f({ name: 'Toilet', amenity: 'toilets', wheelchair: 'yes' }))).not.toBeNull()
+  })
+})
