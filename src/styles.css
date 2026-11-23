@@ -104,3 +104,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .intro { border-bottom: 1px solid #ddd; padding-bottom: 16px; margin-bottom: 16px; }
 .intro h2 { margin-top: 0; }
 .intro ol { margin: 8px 0 14px; padding-left: 22px; line-height: 1.6; }
+/* Loading: the shape of the answer appears at once, so nobody thinks the app froze. */
+.skeleton { display: grid; gap: 10px; background: #fff; border-radius: 16px; padding: 16px; }
+.skeleton.photo-loading { padding: 0; background: none; }
+.loading-line { display: flex; align-items: center; gap: 10px; margin: 0; color: #555; }
+.loading-line.small { font-size: 14px; }
+.spinner { width: 18px; height: 18px; border: 3px solid #d9e3de; border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; flex: none; }
+.bone { background: linear-gradient(90deg, #ececec 25%, #f6f6f6 50%, #ececec 75%); background-size: 200% 100%; border-radius: 8px; animation: shimmer 1.4s ease-in-out infinite; }
+.bone.title { height: 26px; width: 55%; }
+.bone.verdict { height: 52px; border-radius: 12px; }
+.bone.line { height: 14px; }
+.bone.line.short { width: 40%; }
+.bone.photo { height: 180px; border-radius: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .spinner, .bone { animation: none; } }

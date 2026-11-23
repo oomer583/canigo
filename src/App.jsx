@@ -198,7 +198,12 @@ function Answer({ place, profile, photo, city, onAdded, onWrong }) {
           ))}
         </ul>
       )}
-      {photo === 'loading' && <p className="hint small">Looking for a street photo of the entrance…</p>}
+      {photo === 'loading' && (
+        <div className="skeleton photo-loading" role="status">
+          <p className="loading-line small"><span className="spinner" aria-hidden="true" />Looking for a street photo of the entrance…</p>
+          <div className="bone photo" />
+        </div>
+      )}
       {photo && photo !== 'loading' && photo.photo && (
         <figure className="photo">
           <img src={photo.photo.url} alt={`Street photo near ${place.name}`} loading="lazy" />
@@ -504,7 +509,16 @@ export default function App() {
           <section aria-live="polite">
             {!hasToken && <p className="warn">Developer note: add your accessibility.cloud token to <code>.env</code>.</p>}
             {state === 'idle' && <p className="hint">Type a place name, or tap what you need. CanIGo tells you if the entrance works for you.</p>}
-            {state === 'loading' && <p className="hint">Checking the entrance…</p>}
+            {state === 'loading' && (
+              <div className="skeleton" role="status" aria-live="polite">
+                <p className="loading-line"><span className="spinner" aria-hidden="true" />Checking the entrance…</p>
+                <div className="bone title" />
+                <div className="bone verdict" />
+                <div className="bone line" />
+                <div className="bone line short" />
+                <div className="bone photo" />
+              </div>
+            )}
             {state === 'error' && <p className="warn">{error}</p>}
             {state === 'list' && list && (
               <div className="list">
