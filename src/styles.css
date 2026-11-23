@@ -121,3 +121,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 @media (prefers-reduced-motion: reduce) { .spinner, .bone { animation: none; } }
 .lang-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: #555; margin-top: 6px; }
 .lang-pick select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid #ccc; background: #fff; }
+.intro .lang-pick { float: right; margin: 0 0 8px 12px; }
+.intro .why { margin: 4px 0 10px; color: #333; line-height: 1.5; }

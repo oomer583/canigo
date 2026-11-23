@@ -26,12 +26,14 @@ function Recenter({ at }) {
   return null
 }
 
-function ProfilePicker({ current, onPick, onDemo }) {
+function ProfilePicker({ current, onPick, onDemo, uiLang, onLang }) {
   return (
     <div className="picker">
       {!current && (
         <section className="intro">
+          <LangPicker value={uiLang} onChange={onLang} />
           <h2>{t('Steps, ramps, door width: know before you go.')}</h2>
+          <p className="why">{t("Map apps only say whether a place suits a wheelchair. CanIGo compares steps and door width with what you need, and shows where every answer comes from.")}</p>
           <ol>
             <li>{t('Tell CanIGo how you get around.')}</li>
             <li>{t('Pick your city.')}</li>
@@ -53,6 +55,19 @@ function ProfilePicker({ current, onPick, onDemo }) {
         ))}
       </div>
     </div>
+  )
+}
+
+function LangPicker({ value, onChange }) {
+  return (
+    <label className="lang-pick">
+      <span aria-hidden="true">🌐</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={t('Language')}>
+        {UI_LANGS.map((l) => (
+          <option key={l.id} value={l.id}>{l.label}</option>
+        ))}
+      </select>
+    </label>
   )
 }
 
@@ -496,7 +511,7 @@ export default function App() {
       </header>
 
       {picking ? (
-        <ProfilePicker current={profile} onPick={pick} onDemo={startDemo} />
+        <ProfilePicker current={profile} onPick={pick} onDemo={startDemo} uiLang={uiLang} onLang={changeLang} />
       ) : pickingCity ? (
         <CityPicker current={city} onPick={pickCity} />
       ) : (
@@ -607,14 +622,7 @@ export default function App() {
           )}
           <footer className="foot">
             <p className="credits">{t('Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).')}</p>
-            <label className="lang-pick">
-              <span aria-hidden="true">🌐</span>
-              <select value={uiLang} onChange={(e) => changeLang(e.target.value)} aria-label={t('Language')}>
-                {UI_LANGS.map((l) => (
-                  <option key={l.id} value={l.id}>{l.label}</option>
-                ))}
-              </select>
-            </label>
+            <LangPicker value={uiLang} onChange={changeLang} />
           </footer>
         </main>
       )}
