@@ -10,13 +10,15 @@ import { mergePlaces, nameKey } from './merge.js'
 import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
-import { findNearby, uncheckedNearby, currentPosition, searchCityPacks, alternativesNear } from './nearby.js'
+import { findNearby, uncheckedNearby, currentPosition, searchCityPacks, alternativesNear, accessibleAround } from './nearby.js'
 import { looksLikeSentence, understand } from './understand.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 import { t, UI_LANGS, loadLang, saveLang, setLanguage } from './i18n.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
 const OSM_STATUS = { yes: 'yes', limited: 'partial', no: 'no' }
+// Not a category: every kind of place, only the ones this person can get into.
+const AROUND = { id: 'around', label: 'Places you can get into', tags: [] }
 
 function Recenter({ at }) {
   const map = useMap()
@@ -347,7 +349,7 @@ export default function App() {
 
   async function runCategory(category, { inCity = false, km = null, understood = null } = {}) {
     const ctrl = freshRequest()
-    if (!understood) setQuery(t(category.label))
+    if (!understood) setQuery(category.id === 'around' ? '' : t(category.label))
     setState('loading')
     setPlace(null)
     setPhoto(null)
@@ -373,16 +375,19 @@ export default function App() {
     try {
       const suits = (p) => forProfile(p.records, profile).tone !== 'no'
       if (understood) note = [km ? t('Understood as: {category} within {km} km.', { category: t(category.label), km }) : t('Understood as: {category}.', { category: t(category.label) }), note].filter(Boolean).join(' ')
-      let items = await findNearby(category, at, { city: useCity, profile, radius: km ? km * 1000 : undefined, signal: ctrl.signal })
+      const fetchList = (radius) => category.id === 'around'
+        ? accessibleAround(at, { city: useCity, profile, radius, signal: ctrl.signal })
+        : findNearby(category, at, { city: useCity, profile, radius, signal: ctrl.signal })
+      let items = await fetchList(km ? km * 1000 : undefined)
       // Nothing close: widen step by step, and say so. A distance the user gave is kept.
       // Far away, only places you can get into are worth listing: a red place 24 km away helps nobody.
       for (const step of km ? [] : [5, 25]) {
         if (items.length || ctrl.signal.aborted) break
-        items = (await findNearby(category, at, { city: useCity, profile, radius: step * 1000, signal: ctrl.signal })).filter(suits)
+        items = (await fetchList(step * 1000)).filter(suits)
         if (items.length) note = [note, t('Nothing checked close to you, so this list goes up to {km} km and shows only places that work for you.', { km: step })].filter(Boolean).join(' ')
       }
       if (ctrl.signal.aborted) return
-      const unchecked = await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
+      const unchecked = category.id === 'around' ? [] : await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
       if (ctrl.signal.aborted) return
       setList({ category, items, unchecked, note, km, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
       setState('list')
@@ -586,6 +591,12 @@ export default function App() {
           <section aria-live="polite">
             {!hasToken && <p className="warn">Developer note: add your accessibility.cloud token to <code>.env</code>.</p>}
             {state === 'idle' && <p className="hint">{t('Type a place name, or tap what you need. CanIGo tells you if the entrance works for you.')}</p>}
+            {state === 'idle' && (
+              <div className="around">
+                <button className="button" onClick={() => runCategory(AROUND)}>{t('Where can I go near me?')}</button>
+                <p className="hint small">{t('CanIGo asks for your location only when you tap this, and never stores it.')}</p>
+              </div>
+            )}
             {state === 'loading' && (
               <div className="skeleton" role="status" aria-live="polite">
                 <p className="loading-line"><span className="spinner" aria-hidden="true" />{t('Checking the entrance…')}</p>
@@ -599,7 +610,9 @@ export default function App() {
             {state === 'error' && <p className="warn">{error}</p>}
             {state === 'list' && list && (
               <div className="list">
-                <h2>{list.nearMe ? t('{category} near you', { category: t(list.category.label) }) : t('{category} in {city}', { category: t(list.category.label), city: city?.name || t('the city centre') })}</h2>
+                <h2>{list.category.id === 'around'
+                  ? (list.nearMe ? t('Places near you that you can get into') : t('Places in {city} that you can get into', { city: city?.name || t('the city centre') }))
+                  : list.nearMe ? t('{category} near you', { category: t(list.category.label) }) : t('{category} in {city}', { category: t(list.category.label), city: city?.name || t('the city centre') })}</h2>
                 {list.note && <p className="hint small">{list.note}</p>}
                 {list.category.id === 'health' && <p className="conflict">{t("In an emergency, call 112. Don't wait to check the entrance.")}</p>}
                 {list.items.length === 0 && list.unchecked.length === 0 && (
@@ -624,7 +637,7 @@ export default function App() {
                         <span className="dot" style={{ background: COLORS[i.verdict.tone] }} aria-hidden="true" />
                         <span className="row-text">
                           <strong>{i.name}</strong>
-                          <span>{t(i.verdict.title)} · {i.distance < 1000 ? `${i.distance} m` : `${(i.distance / 1000).toFixed(1)} km`}</span>
+                          <span>{i.kind ? t(i.kind.label) : t(i.verdict.title)} · {i.distance < 1000 ? `${i.distance} m` : `${(i.distance / 1000).toFixed(1)} km`}</span>
                         </span>
                       </button>
                     </li>

@@ -15,7 +15,8 @@ export function rankPlaces(groups, at, profile) {
     .sort((a, b) => RANK[a.verdict.tone] - RANK[b.verdict.tone] || a.distance - b.distance)
 }
 
-export async function findNearby(category, at, { city, profile, radius = 1200, signal } = {}) {
+// Every named place around a point, from the city pack and accessibility.cloud.
+async function gatherAround(at, { city, radius, signal }) {
   const [pack, ac] = await Promise.allSettled([
     city && inside(city, at.lat, at.lng) ? loadPack(city.id).then((p) => packNear(p, at.lat, at.lng, radius).places) : Promise.resolve([]),
     hasToken ? placesNear(at.lat, at.lng, Math.min(radius, 1000), signal) : Promise.resolve([])
@@ -24,9 +25,28 @@ export async function findNearby(category, at, { city, profile, radius = 1200, s
   // A place another source marks as a cannabis shop is dropped from every source.
   const banned = new Set(all.filter(isCannabis).map((p) => nameKey(p.name)))
   // A list of "Unnamed place" rows helps nobody: keep only places with a name.
-  const named = all.filter((p) => p.name && p.name !== 'Unnamed place')
-  const groups = mergePlaces(named.filter((p) => inCategory(p, category) && !banned.has(nameKey(p.name))))
+  return all.filter((p) => p.name && p.name !== 'Unnamed place' && !banned.has(nameKey(p.name)))
+}
+
+export async function findNearby(category, at, { city, profile, radius = 1200, signal } = {}) {
+  const named = await gatherAround(at, { city, radius, signal })
+  const groups = mergePlaces(named.filter((p) => inCategory(p, category)))
   return rankPlaces(groups, at, profile).slice(0, 25)
+}
+
+// "Where can I go near me?": places of every kind nearby that this person can get into.
+// A few per kind, so one street of cafés doesn't fill the whole list; nearest first.
+export async function accessibleAround(at, { city, profile, radius = 1000, perCategory = 3, limit = 15, signal } = {}) {
+  const named = await gatherAround(at, { city, radius, signal })
+  const out = []
+  for (const kind of CATEGORIES) {
+    const groups = mergePlaces(named.filter((p) => inCategory(p, kind)))
+    rankPlaces(groups, at, profile)
+      .filter((i) => i.verdict.tone === 'yes')
+      .slice(0, perCategory)
+      .forEach((i) => out.push({ ...i, kind }))
+  }
+  return out.sort((a, b) => a.distance - b.distance).slice(0, limit)
 }
 
 // When the answer is red: places of the same kind nearby that this person can get into.
