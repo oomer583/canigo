@@ -9,9 +9,9 @@
    5.08,
    52.43
   ],
-  "count": 11862,
-  "builtAt": "2026-11-23T13:40:20.237Z",
-  "bytes": 1851026
+  "count": 11867,
+  "builtAt": "2026-11-24T14:39:07.428Z",
+  "bytes": 1851740
  },
  {
   "id": "baku",
@@ -37,9 +37,9 @@
    29.4,
    41.25
   ],
-  "count": 7616,
-  "builtAt": "2026-11-23T13:56:07.038Z",
-  "bytes": 1146391
+  "count": 7622,
+  "builtAt": "2026-11-24T15:22:47.127Z",
+  "bytes": 1147393
  },
  {
   "id": "london",
@@ -51,9 +51,9 @@
    0.33,
    51.7
   ],
-  "count": 62250,
-  "builtAt": "2026-11-23T13:15:32.856Z",
-  "bytes": 8906466
+  "count": 62279,
+  "builtAt": "2026-11-24T14:19:52.817Z",
+  "bytes": 8910684
  },
  {
   "id": "berlin",
@@ -65,8 +65,470 @@
    13.77,
    52.68
   ],
-  "count": 81884,
-  "builtAt": "2026-11-23T13:06:27.675Z",
-  "bytes": 12685530
+  "count": 81895,
+  "builtAt": "2026-11-24T13:39:51.996Z",
+  "bytes": 12687256
+ },
+ {
+  "id": "toronto",
+  "name": "Toronto",
+  "country": "Canada",
+  "bbox": [
+   -79.64,
+   43.58,
+   -79.12,
+   43.86
+  ],
+  "count": 11122,
+  "builtAt": "2026-11-24T14:59:03.667Z",
+  "bytes": 1740732
+ },
+ {
+  "id": "vancouver",
+  "name": "Vancouver",
+  "country": "Canada",
+  "bbox": [
+   -123.23,
+   49.2,
+   -123.02,
+   49.32
+  ],
+  "count": 4464,
+  "builtAt": "2026-11-24T13:50:05.512Z",
+  "bytes": 697299
+ },
+ {
+  "id": "hamburg",
+  "name": "Hamburg",
+  "country": "Germany",
+  "bbox": [
+   9.73,
+   53.39,
+   10.33,
+   53.74
+  ],
+  "count": 58157,
+  "builtAt": "2026-11-24T14:21:05.373Z",
+  "bytes": 8506404
+ },
+ {
+  "id": "munich",
+  "name": "Munich",
+  "country": "Germany",
+  "bbox": [
+   11.36,
+   48.06,
+   11.72,
+   48.25
+  ],
+  "count": 56162,
+  "builtAt": "2026-11-24T14:53:25.103Z",
+  "bytes": 8421073
+ },
+ {
+  "id": "leipzig",
+  "name": "Leipzig",
+  "country": "Germany",
+  "bbox": [
+   12.24,
+   51.24,
+   12.54,
+   51.45
+  ],
+  "count": 24582,
+  "builtAt": "2026-11-24T15:07:19.321Z",
+  "bytes": 3639366
+ },
+ {
+  "id": "dresden",
+  "name": "Dresden",
+  "country": "Germany",
+  "bbox": [
+   13.58,
+   50.97,
+   13.97,
+   51.18
+  ],
+  "count": 40319,
+  "builtAt": "2026-11-24T15:07:30.628Z",
+  "bytes": 5730262
+ },
+ {
+  "id": "nuremberg",
+  "name": "Nuremberg",
+  "country": "Germany",
+  "bbox": [
+   10.99,
+   49.33,
+   11.22,
+   49.54
+  ],
+  "count": 50138,
+  "builtAt": "2026-11-24T14:31:31.801Z",
+  "bytes": 6824167
+ },
+ {
+  "id": "bremen",
+  "name": "Bremen",
+  "country": "Germany",
+  "bbox": [
+   8.48,
+   53.01,
+   8.99,
+   53.23
+  ],
+  "count": 14333,
+  "builtAt": "2026-11-24T13:40:08.364Z",
+  "bytes": 2148094
+ },
+ {
+  "id": "vienna",
+  "name": "Vienna",
+  "country": "Austria",
+  "bbox": [
+   16.18,
+   48.12,
+   16.58,
+   48.32
+  ],
+  "count": 36848,
+  "builtAt": "2026-11-24T13:33:39.305Z",
+  "bytes": 5515360
+ },
+ {
+  "id": "zurich",
+  "name": "Zurich",
+  "country": "Switzerland",
+  "bbox": [
+   8.45,
+   47.32,
+   8.63,
+   47.43
+  ],
+  "count": 15368,
+  "builtAt": "2026-11-24T15:18:28.934Z",
+  "bytes": 2373130
+ },
+ {
+  "id": "geneva",
+  "name": "Geneva",
+  "country": "Switzerland",
+  "bbox": [
+   6.08,
+   46.17,
+   6.2,
+   46.25
+  ],
+  "count": 1575,
+  "builtAt": "2026-11-24T15:18:43.945Z",
+  "bytes": 257735
+ },
+ {
+  "id": "rotterdam",
+  "name": "Rotterdam",
+  "country": "Netherlands",
+  "bbox": [
+   4.38,
+   51.86,
+   4.6,
+   51.99
+  ],
+  "count": 1868,
+  "builtAt": "2026-11-24T14:39:43.194Z",
+  "bytes": 299542
+ },
+ {
+  "id": "utrecht",
+  "name": "Utrecht",
+  "country": "Netherlands",
+  "bbox": [
+   5.02,
+   52.03,
+   5.19,
+   52.14
+  ],
+  "count": 3114,
+  "builtAt": "2026-11-24T14:40:18.286Z",
+  "bytes": 541607
+ },
+ {
+  "id": "the-hague",
+  "name": "The Hague",
+  "country": "Netherlands",
+  "bbox": [
+   4.19,
+   52.01,
+   4.41,
+   52.13
+  ],
+  "count": 2346,
+  "builtAt": "2026-11-24T14:40:54.350Z",
+  "bytes": 371247
+ },
+ {
+  "id": "manchester",
+  "name": "Manchester",
+  "country": "United Kingdom",
+  "bbox": [
+   -2.32,
+   53.4,
+   -2.15,
+   53.54
+  ],
+  "count": 7847,
+  "builtAt": "2026-11-24T14:20:38.661Z",
+  "bytes": 1100161
+ },
+ {
+  "id": "edinburgh",
+  "name": "Edinburgh",
+  "country": "United Kingdom",
+  "bbox": [
+   -3.33,
+   55.89,
+   -3.08,
+   55.99
+  ],
+  "count": 11907,
+  "builtAt": "2026-11-24T15:10:15.942Z",
+  "bytes": 1687527
+ },
+ {
+  "id": "paris",
+  "name": "Paris",
+  "country": "France",
+  "bbox": [
+   2.22,
+   48.81,
+   2.47,
+   48.91
+  ],
+  "count": 60844,
+  "builtAt": "2026-11-24T14:25:44.572Z",
+  "bytes": 9312977
+ },
+ {
+  "id": "barcelona",
+  "name": "Barcelona",
+  "country": "Spain",
+  "bbox": [
+   2.05,
+   41.32,
+   2.23,
+   41.47
+  ],
+  "count": 50242,
+  "builtAt": "2026-11-24T13:52:58.518Z",
+  "bytes": 6756088
+ },
+ {
+  "id": "madrid",
+  "name": "Madrid",
+  "country": "Spain",
+  "bbox": [
+   -3.84,
+   40.31,
+   -3.52,
+   40.56
+  ],
+  "count": 37366,
+  "builtAt": "2026-11-24T14:29:05.451Z",
+  "bytes": 5246133
+ },
+ {
+  "id": "milan",
+  "name": "Milan",
+  "country": "Italy",
+  "bbox": [
+   9.04,
+   45.39,
+   9.28,
+   45.54
+  ],
+  "count": 25217,
+  "builtAt": "2026-11-24T14:44:22.237Z",
+  "bytes": 3469572
+ },
+ {
+  "id": "rome",
+  "name": "Rome",
+  "country": "Italy",
+  "bbox": [
+   12.37,
+   41.8,
+   12.62,
+   41.99
+  ],
+  "count": 10098,
+  "builtAt": "2026-11-24T13:57:24.594Z",
+  "bytes": 1437777
+ },
+ {
+  "id": "copenhagen",
+  "name": "Copenhagen",
+  "country": "Denmark",
+  "bbox": [
+   12.45,
+   55.61,
+   12.65,
+   55.73
+  ],
+  "count": 5531,
+  "builtAt": "2026-11-24T14:11:19.062Z",
+  "bytes": 902195
+ },
+ {
+  "id": "stockholm",
+  "name": "Stockholm",
+  "country": "Sweden",
+  "bbox": [
+   17.9,
+   59.26,
+   18.18,
+   59.4
+  ],
+  "count": 34482,
+  "builtAt": "2026-11-24T15:15:28.948Z",
+  "bytes": 4603942
+ },
+ {
+  "id": "oslo",
+  "name": "Oslo",
+  "country": "Norway",
+  "bbox": [
+   10.62,
+   59.86,
+   10.88,
+   59.98
+  ],
+  "count": 3425,
+  "builtAt": "2026-11-24T14:51:59.175Z",
+  "bytes": 534941
+ },
+ {
+  "id": "helsinki",
+  "name": "Helsinki",
+  "country": "Finland",
+  "bbox": [
+   24.82,
+   60.13,
+   25.11,
+   60.25
+  ],
+  "count": 32393,
+  "builtAt": "2026-11-24T14:17:28.037Z",
+  "bytes": 4541804
+ },
+ {
+  "id": "prague",
+  "name": "Prague",
+  "country": "Czechia",
+  "bbox": [
+   14.3,
+   49.98,
+   14.65,
+   50.14
+  ],
+  "count": 14697,
+  "builtAt": "2026-11-24T14:08:02.207Z",
+  "bytes": 2205078
+ },
+ {
+  "id": "warsaw",
+  "name": "Warsaw",
+  "country": "Poland",
+  "bbox": [
+   20.85,
+   52.1,
+   21.27,
+   52.37
+  ],
+  "count": 48168,
+  "builtAt": "2026-11-24T14:30:34.289Z",
+  "bytes": 7229933
+ },
+ {
+  "id": "brussels",
+  "name": "Brussels",
+  "country": "Belgium",
+  "bbox": [
+   4.29,
+   50.79,
+   4.45,
+   50.91
+  ],
+  "count": 16491,
+  "builtAt": "2026-11-24T13:38:54.914Z",
+  "bytes": 2425921
+ },
+ {
+  "id": "dublin",
+  "name": "Dublin",
+  "country": "Ireland",
+  "bbox": [
+   -6.39,
+   53.29,
+   -6.11,
+   53.41
+  ],
+  "count": 6437,
+  "builtAt": "2026-11-24T14:28:33.158Z",
+  "bytes": 1058128
+ },
+ {
+  "id": "lisbon",
+  "name": "Lisbon",
+  "country": "Portugal",
+  "bbox": [
+   -9.23,
+   38.69,
+   -9.09,
+   38.8
+  ],
+  "count": 5518,
+  "builtAt": "2026-11-24T15:04:46.458Z",
+  "bytes": 819309
+ },
+ {
+  "id": "ankara",
+  "name": "Ankara",
+  "country": "Türkiye",
+  "bbox": [
+   32.65,
+   39.82,
+   33,
+   40.02
+  ],
+  "count": 1078,
+  "builtAt": "2026-11-24T15:23:06.395Z",
+  "bytes": 160577
+ },
+ {
+  "id": "izmir",
+  "name": "İzmir",
+  "country": "Türkiye",
+  "bbox": [
+   26.95,
+   38.33,
+   27.25,
+   38.5
+  ],
+  "count": 831,
+  "builtAt": "2026-11-24T15:23:25.712Z",
+  "bytes": 136015
+ },
+ {
+  "id": "tbilisi",
+  "name": "Tbilisi",
+  "country": "Georgia",
+  "bbox": [
+   44.7,
+   41.65,
+   44.95,
+   41.8
+  ],
+  "count": 5820,
+  "builtAt": "2026-11-24T14:18:55.134Z",
+  "bytes": 830469
  }
 ]
