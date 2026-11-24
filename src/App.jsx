@@ -376,10 +376,15 @@ export default function App() {
       return
     }
     // The chosen city always wins: away from it, search its centre instead of where the user is.
-    const useCity = city
+    // "Near me" means near the user. Away from the chosen city, use the CanIGo city they are in;
+    // outside every CanIGo city, use online sources around them. Never a list from another country.
+    let useCity = city
     if (city && at.fromGps && !inside(city, at.lat, at.lng)) {
-      at = { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 }
-      note = t('You are outside {city}, so this list starts from the centre of {city}.', { city: city.name })
+      const here = (await listCities().catch(() => [])).find((c) => inside(c, at.lat, at.lng))
+      useCity = here || null
+      note = here
+        ? t('You are in {city}, so this list uses {city}.', { city: here.name })
+        : t('You are not in a CanIGo city, so this list uses online sources only.')
     }
     try {
       const suits = (p) => forProfile(p.records, profile).tone !== 'no'
@@ -398,7 +403,7 @@ export default function App() {
       if (ctrl.signal.aborted) return
       const unchecked = category.id === 'around' ? [] : await uncheckedNearby(category, at, { city: useCity, checked: items, radius: km ? km * 1000 : undefined })
       if (ctrl.signal.aborted) return
-      setList({ category, items, unchecked, note, km, centre: inCity || !at.fromGps ? null : useCity, nearMe: !!at.fromGps })
+      setList({ category, items, unchecked, note, km, centre: inCity || !at.fromGps ? null : city, nearMe: !!at.fromGps })
       setState('list')
     } catch (err) {
       if (err.name === 'AbortError') return
