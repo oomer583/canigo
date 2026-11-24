@@ -186,7 +186,6 @@ function Answer({ place, profile, photo, city, onAdded, onWrong, onOpen }) {
     return () => { live = false }
   }, [place.name, place.lat, place.category, v.tone, profile?.id, city?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const [lang, setLang] = useState(() => defaultLang(city))
-  const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
   const question = askText(profile, place.name, lang)
   async function copy() {
     try {
@@ -278,7 +277,6 @@ function Answer({ place, profile, photo, city, onAdded, onWrong, onOpen }) {
         </div>
       )}
       <div className="actions">
-        <a className="button" href={directions} target="_blank" rel="noreferrer">{t('Directions')}</a>
         {(v.tone !== 'yes' || v.conflict) && (
           <details className="ask" open={v.conflict || v.aiOnly || v.status === 'unknown'}>
             <summary>{t('Ask them before you go')}</summary>
