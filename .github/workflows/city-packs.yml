@@ -1,11 +1,15 @@
-# Builds offline city packs from OpenStreetMap (Geofabrik extracts) once a week.
+# Builds offline city packs from OpenStreetMap (Geofabrik extracts) once a month,
+# and whenever the city list changes.
 # Overpass is not reachable from Cloudflare, so the data is prepared here instead.
 name: City packs
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/cities.json']
   schedule:
-    - cron: '17 3 * * 1'
+    - cron: '17 3 1 * *'
 
 permissions:
   contents: write
@@ -13,7 +17,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,7 +32,8 @@ jobs:
           # "pbf" in cities.json is a Geofabrik region id; look up its download URL.
           curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 5 --retry-all-errors --retry-delay 20 -o work/index.json https://download.geofabrik.de/index-v1-nogeom.json
           for pbf in $(jq -r '.[].pbf' scripts/cities.json | sort -u); do
-            url=$(jq -r --arg id "$pbf" '.features[] | select(.properties.id == $id) | .properties.urls.pbf' work/index.json)
+            # Region ids differ between Geofabrik versions ("us/texas" or "texas"): accept either.
+            url=$(jq -r --arg id "$pbf" '(first(.features[] | select(.properties.id == $id)) // first(.features[] | select(.properties.id == ("us/" + $id) or ("us/" + .properties.id) == $id)) // first(.features[] | select((.properties.id | split("/") | last) == ($id | split("/") | last)))) | .properties.urls.pbf // empty' work/index.json)
             echo "Region $pbf -> $url"
             file="work/$pbf.osm.pbf"
             ok=""
@@ -52,6 +57,11 @@ jobs:
               osmium tags-filter "work/$id.pbf" nwr/wheelchair nwr/entrance n/door nwr/step_count nwr/ramp -o "work/$id-f.pbf" --overwrite
               osmium export "work/$id-f.pbf" -f geojsonseq --attributes type,id,timestamp -o "work/$id.geojsonseq" --overwrite
               node scripts/build-pack.mjs "$id" "work/$id.geojsonseq"
+              # Cloudflare Pages refuses files over 25 MiB, and one such file fails the whole deploy.
+              if [ -f "public/packs/$id.json" ] && [ "$(stat -c %s "public/packs/$id.json")" -gt 24000000 ]; then
+                echo "::warning::$id pack is over 24 MB, leaving it out"
+                git checkout -- "public/packs/$id.json" 2>/dev/null || rm -f "public/packs/$id.json"
+              fi
             done
             rm -f "$file"
           done
@@ -66,7 +76,7 @@ jobs:
           pip install -q overturemaps
           for id in $(jq -r '.[].id' scripts/cities.json); do
             bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
-            if overturemaps download --bbox="$bbox" -f geojsonseq -t place -o "work/$id-places.geojsonseq"; then
+            if timeout 600 overturemaps download --bbox="$bbox" -f geojsonseq -t place -o "work/$id-places.geojsonseq"; then
               python scripts/build-places.py "$id" "work/$id-places.geojsonseq" || echo "::warning::places failed for $id"
             else
               echo "::warning::Overture download failed for $id"

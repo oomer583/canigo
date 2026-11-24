@@ -3,7 +3,7 @@
 // Output: public/packs/<cityId>.json, in the same shape as Overpass elements,
 // so src/sources/osm.js can read it with parseOverpass().
 // Data © OpenStreetMap contributors, ODbL.
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { isoTime } from '../src/sources/osm.js'
 
 const KEEP = [
@@ -58,7 +58,20 @@ if (process.argv[1]?.endsWith('build-pack.mjs')) {
     seen.add(`${el.type}/${el.id}`)
     elements.push(el)
   }
+  const path = `public/packs/${cityId}.json`
+  // Unchanged data keeps the old file (and its date), so the weekly job doesn't add megabytes
+  // of identical packs to the git history.
+  if (existsSync(path)) {
+    try {
+      if (JSON.stringify(JSON.parse(readFileSync(path, 'utf8')).elements) === JSON.stringify(elements)) {
+        console.log(`${cityId}: unchanged (${elements.length})`)
+        process.exit(0)
+      }
+    } catch {
+      // unreadable old pack: rebuild it
+    }
+  }
   const out = { city: cityId, builtAt: new Date().toISOString(), count: elements.length, elements }
-  writeFileSync(`public/packs/${cityId}.json`, JSON.stringify(out))
+  writeFileSync(path, JSON.stringify(out))
   console.log(`${cityId}: ${elements.length} places and entrances`)
 }

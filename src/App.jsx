@@ -73,18 +73,26 @@ function LangPicker({ value, onChange }) {
   )
 }
 
+const fold = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
+
 function CityPicker({ current, onPick }) {
   const [cities, setCities] = useState(null)
+  const [find, setFind] = useState('')
   useEffect(() => {
-    listCities().then(setCities).catch(() => setCities([]))
+    listCities().then((list) => setCities([...list].sort((a, b) => a.name.localeCompare(b.name)))).catch(() => setCities([]))
   }, [])
+  const shown = (cities || []).filter((c) => !find.trim() || fold(`${c.name} ${c.country}`).includes(fold(find.trim())))
   return (
     <div className="picker">
       <h2>{t('Which city do you live in?')}</h2>
       <p>{t("CanIGo saves that city's entrance data on your phone, so answers come fast and work offline. Other places still work online.")}</p>
       {cities === null && <p className="hint">{t('Loading cities…')}</p>}
+      {cities && cities.length > 8 && (
+        <input className="city-search" type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder={t('Search for your city')} aria-label={t('Search for your city')} autoComplete="off" />
+      )}
+      {cities && find.trim() && shown.length === 0 && <p className="hint">{t('No city found.')}</p>}
       <div className="choices">
-        {(cities || []).map((c) => (
+        {shown.map((c) => (
           <button key={c.id} className={current?.id === c.id ? 'choice on' : 'choice'} onClick={() => onPick(c)}>
             <strong>{c.name}</strong>
             <span>{c.country} · {t('{count} places and entrances', { count: c.count.toLocaleString('en') })} · {Math.max(1, Math.round(c.bytes / 1e6))} MB</span>

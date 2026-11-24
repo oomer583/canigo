@@ -124,3 +124,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .intro .lang-pick { float: right; margin: 0 0 8px 12px; }
 .intro .why { margin: 4px 0 10px; color: #333; line-height: 1.5; }
 .around { margin-top: 18px; }
+.city-search { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 12px; border: 2px solid #d9d5ca; font-size: 17px; background: #fff; margin: 4px 0 12px; }

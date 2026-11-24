@@ -74,7 +74,7 @@ video/rec.mjs             records real app sessions for the demo video
 ```
 
 - **Hosting:** Cloudflare Pages + Pages Functions. The app is a PWA (`vite-plugin-pwa`), so a saved city works offline.
-- **City packs:** Overpass is not reachable from Cloudflare's servers, so a GitHub Action (`.github/workflows/city-packs.yml`) rebuilds the packs every Monday from Geofabrik extracts with osmium. Cities: Amsterdam, Baku, Istanbul, London, Berlin.
+- **City packs:** Overpass is not reachable from Cloudflare's servers, so a GitHub Action (`.github/workflows/city-packs.yml`) builds the packs from Geofabrik extracts with osmium, once a month and whenever `scripts/cities.json` changes. A pack whose data hasn't changed is not rewritten, so the git history doesn't fill up with identical files. 50 cities are configured, in Europe, North America, Türkiye, Azerbaijan and Georgia.
 - **AI:** Cloudflare Workers AI, `@cf/meta/llama-4-scout-17b-16e-instruct` with `@cf/google/gemma-4-26b-a4b-it` as fallback. It only reads street photos and turns sentences into searches. It never decides whether a place is accessible.
 - **Volunteer reports:** Cloudflare D1. No accounts, no free text beyond the place name, no IP addresses stored, a limit of 10 reports per hour, and three "this is wrong" reports hide an entry.
 
@@ -133,7 +133,7 @@ pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Wor
 - [x] Volunteer reports ("Volunteer, not verified")
 - [x] Interface in English, Turkish, Azerbaijani and Russian
 - [x] Works offline for a saved city (PWA)
-- [ ] More cities
+- [x] 50 cities configured, with city search
 - [ ] Panoramax photos as a second image source
 - [ ] Step-free transit stations from GTFS `wheelchair_boarding`
 - [ ] Volunteer reports reviewed by other volunteers
