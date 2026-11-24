@@ -70,6 +70,118 @@
   "bytes": 12687256
  },
  {
+  "id": "new-york",
+  "name": "New York",
+  "country": "United States",
+  "bbox": [
+   -74.26,
+   40.49,
+   -73.7,
+   40.92
+  ],
+  "count": 13593,
+  "builtAt": "2026-11-24T17:01:44.327Z",
+  "bytes": 2255874
+ },
+ {
+  "id": "san-francisco",
+  "name": "San Francisco",
+  "country": "United States",
+  "bbox": [
+   -122.52,
+   37.7,
+   -122.35,
+   37.83
+  ],
+  "count": 5162,
+  "builtAt": "2026-11-24T16:40:01.866Z",
+  "bytes": 874743
+ },
+ {
+  "id": "los-angeles",
+  "name": "Los Angeles",
+  "country": "United States",
+  "bbox": [
+   -118.67,
+   33.7,
+   -118.15,
+   34.34
+  ],
+  "count": 5328,
+  "builtAt": "2026-11-24T16:47:59.029Z",
+  "bytes": 821897
+ },
+ {
+  "id": "seattle",
+  "name": "Seattle",
+  "country": "United States",
+  "bbox": [
+   -122.44,
+   47.49,
+   -122.24,
+   47.74
+  ],
+  "count": 5011,
+  "builtAt": "2026-11-24T17:11:16.349Z",
+  "bytes": 760501
+ },
+ {
+  "id": "chicago",
+  "name": "Chicago",
+  "country": "United States",
+  "bbox": [
+   -87.94,
+   41.64,
+   -87.52,
+   42.03
+  ],
+  "count": 9428,
+  "builtAt": "2026-11-24T16:52:05.085Z",
+  "bytes": 1346099
+ },
+ {
+  "id": "boston",
+  "name": "Boston",
+  "country": "United States",
+  "bbox": [
+   -71.19,
+   42.23,
+   -70.99,
+   42.4
+  ],
+  "count": 3684,
+  "builtAt": "2026-11-24T16:56:12.880Z",
+  "bytes": 579306
+ },
+ {
+  "id": "washington-dc",
+  "name": "Washington, D.C.",
+  "country": "United States",
+  "bbox": [
+   -77.12,
+   38.79,
+   -76.91,
+   39
+  ],
+  "count": 1876,
+  "builtAt": "2026-11-24T16:48:13.190Z",
+  "bytes": 294249
+ },
+ {
+  "id": "austin",
+  "name": "Austin",
+  "country": "United States",
+  "bbox": [
+   -97.94,
+   30.1,
+   -97.56,
+   30.52
+  ],
+  "count": 4195,
+  "builtAt": "2026-11-24T17:08:16.243Z",
+  "bytes": 705180
+ },
+ {
   "id": "toronto",
   "name": "Toronto",
   "country": "Canada",
