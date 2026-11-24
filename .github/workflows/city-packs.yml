@@ -23,8 +23,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Free disk space
+        # The runner starts with ~14 GB free; big Geofabrik extracts need more headroom.
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
       - name: Install osmium
         run: sudo apt-get update && sudo apt-get install -y osmium-tool jq
+      - name: Choose what to build
+        # A push that changes the city list only builds the cities that have no pack yet.
+        # The monthly run and a manual run rebuild everything.
+        run: echo "ONLY_MISSING=${{ github.event_name == 'push' && '1' || '0' }}" >> "$GITHUB_ENV"
       - name: Build packs
         run: |
           set -euo pipefail
@@ -32,15 +39,19 @@ jobs:
           # "pbf" in cities.json is a Geofabrik region id; look up its download URL.
           curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 5 --retry-all-errors --retry-delay 20 -o work/index.json https://download.geofabrik.de/index-v1-nogeom.json
           for pbf in $(jq -r '.[].pbf' scripts/cities.json | sort -u); do
+            if [ "$ONLY_MISSING" = "1" ]; then
+              missing=$(jq -r --arg p "$pbf" '.[] | select(.pbf == $p) | .id' scripts/cities.json | while read -r id; do [ -f "public/packs/$id.json" ] || echo "$id"; done)
+              if [ -z "$missing" ]; then echo "Region $pbf: all its cities already have packs"; continue; fi
+            fi
             # Region ids differ between Geofabrik versions ("us/texas" or "texas"): accept either.
-            url=$(jq -r --arg id "$pbf" '(first(.features[] | select(.properties.id == $id)) // first(.features[] | select(.properties.id == ("us/" + $id) or ("us/" + .properties.id) == $id)) // first(.features[] | select((.properties.id | split("/") | last) == ($id | split("/") | last)))) | .properties.urls.pbf // empty' work/index.json)
+            url=$(jq -r --arg id "$pbf" '(first(.features[] | select(.properties.id == $id)) // first(.features[] | select(.properties.id == ("us/" + $id) or ("us/" + .properties.id) == $id)) // first(.features[] | select((.properties.id | split("/") | last) == ($id | split("/") | last))) // first(.features[] | select((.properties.id | sub("-regbez$"; "")) == ($id | sub("-regbez$"; ""))))) | .properties.urls.pbf // empty' work/index.json)
             echo "Region $pbf -> $url"
             file="work/$pbf.osm.pbf"
             ok=""
             if [ -n "$url" ]; then
               # "-latest" sometimes redirects to a mirror that does not have the file yet; fall back to dated files.
               for try in "$url" $(for n in 1 2 3; do echo "${url/-latest/-$(date -u -d "-$n day" +%y%m%d)}"; done); do
-                if curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 2 --retry-all-errors --retry-delay 15 -o "$file" "$try"; then ok="$try"; break; fi
+                if curl -sSfL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" --retry 2 --retry-all-errors --retry-delay 15 --max-time 1800 -o "$file" "$try"; then ok="$try"; break; fi
                 echo "Failed: $try"
                 curl -sIL -A "canigo-city-packs/1.0 (+https://github.com/oomer583/canigo)" "$try" | tr -d '\r' | head -20 || true
               done
@@ -57,6 +68,8 @@ jobs:
               osmium tags-filter "work/$id.pbf" nwr/wheelchair nwr/entrance n/door nwr/step_count nwr/ramp -o "work/$id-f.pbf" --overwrite
               osmium export "work/$id-f.pbf" -f geojsonseq --attributes type,id,timestamp -o "work/$id.geojsonseq" --overwrite
               node scripts/build-pack.mjs "$id" "work/$id.geojsonseq"
+              # Intermediate files filled the disk in run #12: remove them as soon as the pack exists.
+              rm -f "work/$id.pbf" "work/$id-f.pbf" "work/$id.geojsonseq"
               # Cloudflare Pages refuses files over 25 MiB, and one such file fails the whole deploy.
               if [ -f "public/packs/$id.json" ] && [ "$(stat -c %s "public/packs/$id.json")" -gt 24000000 ]; then
                 echo "::warning::$id pack is over 24 MB, leaving it out"
@@ -75,9 +88,11 @@ jobs:
         run: |
           pip install -q overturemaps
           for id in $(jq -r '.[].id' scripts/cities.json); do
+            if [ "$ONLY_MISSING" = "1" ] && [ -f "public/packs/$id-places.json" ]; then continue; fi
             bbox=$(jq -r --arg id "$id" '.[] | select(.id == $id) | .bbox | join(",")' scripts/cities.json)
             if timeout 600 overturemaps download --bbox="$bbox" -f geojsonseq -t place -o "work/$id-places.geojsonseq"; then
               python scripts/build-places.py "$id" "work/$id-places.geojsonseq" || echo "::warning::places failed for $id"
+              rm -f "work/$id-places.geojsonseq"
             else
               echo "::warning::Overture download failed for $id"
             fi
