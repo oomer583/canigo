@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['scripts/cities.json']
+    paths: ['scripts/cities.json', '.github/workflows/city-packs.yml']
   schedule:
     - cron: '17 3 1 * *'
 
@@ -46,7 +46,7 @@ jobs:
             # Region ids differ between Geofabrik versions ("us/texas" or "texas"): accept either.
             url=$(jq -r --arg id "$pbf" '(first(.features[] | select(.properties.id == $id)) // first(.features[] | select(.properties.id == ("us/" + $id) or ("us/" + .properties.id) == $id)) // first(.features[] | select((.properties.id | split("/") | last) == ($id | split("/") | last))) // first(.features[] | select((.properties.id | sub("-regbez$"; "")) == ($id | sub("-regbez$"; ""))))) | .properties.urls.pbf // empty' work/index.json)
             echo "Region $pbf -> $url"
-            file="work/$pbf.osm.pbf"
+            file="work/${pbf//\//_}.osm.pbf"  # "us/texas" -> us_texas: a "/" in the name pointed into folders that don't exist
             ok=""
             if [ -n "$url" ]; then
               # "-latest" sometimes redirects to a mirror that does not have the file yet; fall back to dated files.

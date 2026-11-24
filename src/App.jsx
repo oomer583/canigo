@@ -199,6 +199,7 @@ function Answer({ place, profile, photo, city, onAdded, onWrong, onOpen }) {
   return (
     <article className="answer-card">
       <h2>{place.name}</h2>
+      {place.outside && <p className="hint small">{t('This place is outside {city}, so CanIGo checked online sources only.', { city: place.outside })}</p>}
       <div className={`answer ${v.tone}`} role="status">
         <span className="dot" aria-hidden="true" />
         <strong>{t(v.title)}</strong>
@@ -500,6 +501,13 @@ export default function App() {
         return []
       })
       if (!target && city) target = await searchCityPacks(city, withoutCity(name, city.name))
+      // Not in the chosen city: look everywhere, so a place in another town can still be checked
+      // (with online sources) and a volunteer who went there can still add its entrance.
+      let outside = null
+      if (!target && city) {
+        const [far] = await search(name, ctrl.signal, null).catch(() => [])
+        if (far) { target = far; outside = city.name }
+      }
       if (!target) {
         setError(city ? t('No place with that name found in {city}. Check the spelling, or change the city at the top.', { city: city.name }) : t('No place found with that name. Try adding the city.'))
         setState('error')
@@ -544,6 +552,7 @@ export default function App() {
         lng: match?.lng ?? target.lng,
         phone: match?.phone || target.phone,
         category: match?.category || target.category || null,
+        outside,
         records
       })
       setNearby(groups.filter((g) => g !== match))
