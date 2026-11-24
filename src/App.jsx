@@ -13,6 +13,7 @@ import { CATEGORIES, detectCategory } from './categories.js'
 import { findNearby, uncheckedNearby, currentPosition, searchCityPacks, alternativesNear, accessibleAround } from './nearby.js'
 import { looksLikeSentence, understand } from './understand.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
+import { notCounted } from './stats.js'
 import { t, UI_LANGS, loadLang, saveLang, setLanguage } from './i18n.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
@@ -707,6 +708,7 @@ export default function App() {
           )}
           <footer className="foot">
             {profile && <button className="link" onClick={startOver}>{t('Start over')}</button>}
+            {notCounted() && <p className="hint small">Visits from this device are not counted.</p>}
             <p className="credits">{t('Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).')}</p>
             <LangPicker value={uiLang} onChange={changeLang} />
           </footer>
