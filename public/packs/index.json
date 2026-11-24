@@ -126,6 +126,62 @@
   "bytes": 8421073
  },
  {
+  "id": "cologne",
+  "name": "Cologne",
+  "country": "Germany",
+  "bbox": [
+   6.77,
+   50.83,
+   7.16,
+   51.08
+  ],
+  "count": 29220,
+  "builtAt": "2026-11-24T16:04:41.864Z",
+  "bytes": 4297918
+ },
+ {
+  "id": "frankfurt",
+  "name": "Frankfurt",
+  "country": "Germany",
+  "bbox": [
+   8.47,
+   50.02,
+   8.8,
+   50.23
+  ],
+  "count": 18579,
+  "builtAt": "2026-11-24T16:01:59.823Z",
+  "bytes": 2957392
+ },
+ {
+  "id": "stuttgart",
+  "name": "Stuttgart",
+  "country": "Germany",
+  "bbox": [
+   9.04,
+   48.69,
+   9.32,
+   48.87
+  ],
+  "count": 17774,
+  "builtAt": "2026-11-24T16:07:08.844Z",
+  "bytes": 2753508
+ },
+ {
+  "id": "duesseldorf",
+  "name": "Düsseldorf",
+  "country": "Germany",
+  "bbox": [
+   6.68,
+   51.12,
+   6.94,
+   51.35
+  ],
+  "count": 38386,
+  "builtAt": "2026-11-24T16:00:09.734Z",
+  "bytes": 5351533
+ },
+ {
   "id": "leipzig",
   "name": "Leipzig",
   "country": "Germany",
