@@ -21,7 +21,7 @@ The data often exists (OpenStreetMap tags, Wheelmap, open datasets, street photo
 1. **"How do you get around?"** Seven profiles: manual, power or wide wheelchair, walker or gait trainer, stroller, crutches or a cane, "steps are hard for me". Each is two numbers: the narrowest door you can pass and how many steps you can manage (`src/profiles.js`). They describe needs, not people.
 2. **Pick your city.** The app saves that city's entrance data on your device, so answers are fast and work offline. Other places still work online.
 3. **Search a place, tap a category, or type a sentence.** Café, Food, Pharmacy, Toilet, Groceries, Hospital, Museum. Places you can get into come first. A sentence like "find me a pharmacy within 2 km" is turned into a search by AI, and the app shows what it understood.
-4. **One answer for you.** Green, yellow or red, with the reason in plain words. A door narrower than you need, or more steps than you can manage, makes it red. Steps within your limit on a place the source calls "not accessible" make it yellow, not red, so the color never contradicts the reason.
+4. **One answer for you.** Green, yellow or red, with the reason in plain words. A door narrower than you need, or more steps than you can manage, makes it red. Steps within your limit on a place the source calls "not accessible" make it yellow, not red, so the color never contradicts the reason. A red or yellow answer always says why; if the source gives no measurements or description, CanIGo says that too. A red answer lists places of the same kind nearby that you can get into.
 5. **Sources and dates.** Every source is listed with its date. Places change, so the newest record leads. An older record that says something else is shown, not hidden. If two records from about the same time (within a year) disagree, the answer is *Sources disagree*. If nobody has checked a place, it says *Not checked yet* and still lists it.
 6. **AI is only a hint.** If there's a recent street photo facing the entrance, a vision model looks for steps or a ramp. If it can't see a door, nothing is shown. Its guess never outranks a real record and never creates or settles a disagreement. The photo is always shown.
 7. **"Ask them before you go."** A ready message with your door width and step limit, in English, Turkish, Azerbaijani or Russian, plus the place's phone number when known.
@@ -84,7 +84,7 @@ video/rec.mjs             records real app sessions for the demo video
 npm install
 cp .env.example .env        # paste your accessibility.cloud app token into .env
 npm run dev
-npm test                    # 73 tests (Vitest)
+npm test                    # 76 tests (Vitest)
 ```
 
 Get a free accessibility.cloud token by creating an organization and an API client at [accessibility.cloud](https://www.accessibility.cloud). It is meant for browser use; keep it out of git anyway (`.env` is ignored).

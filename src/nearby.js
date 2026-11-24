@@ -3,7 +3,7 @@ import { placesNear, hasToken } from './sources/accessibilityCloud.js'
 import { loadPack, packNear, inside } from './sources/cityPack.js'
 import { forProfile } from './verdict.js'
 import { distanceMeters } from './geocode.js'
-import { inCategory, isCannabis } from './categories.js'
+import { CATEGORIES, inCategory, isCannabis } from './categories.js'
 import { loadPlaces, placesNear as overtureNear, placesByName } from './sources/places.js'
 import { mergePlaces, nameKey } from './merge.js'
 
@@ -27,6 +27,15 @@ export async function findNearby(category, at, { city, profile, radius = 1200, s
   const named = all.filter((p) => p.name && p.name !== 'Unnamed place')
   const groups = mergePlaces(named.filter((p) => inCategory(p, category) && !banned.has(nameKey(p.name))))
   return rankPlaces(groups, at, profile).slice(0, 25)
+}
+
+// When the answer is red: places of the same kind nearby that this person can get into.
+// Only places whose kind we know (café, museum, ...), so the alternative is a real substitute.
+export async function alternativesNear(place, { city, profile, limit = 3 } = {}) {
+  const category = CATEGORIES.find((c) => inCategory(place, c))
+  if (!category) return []
+  const items = await findNearby(category, place, { city, profile, radius: 1500 })
+  return items.filter((i) => i.verdict.tone === 'yes' && nameKey(i.name) !== nameKey(place.name)).slice(0, limit)
 }
 
 // The user's position, or null if they say no or it takes too long.

@@ -73,7 +73,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .need:hover { border-color: var(--brand); }
 .list { margin-top: 18px; }
 .list h2 { margin: 0 0 8px; font-size: 22px; }
-.list ul { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+.list ul, .alternatives ul { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
 .row-item { width: 100%; text-align: left; background: #fff; border: 2px solid #e4e1d8; border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; font-weight: 400; }
 .row-item .dot { width: 14px; height: 14px; }
 .row-text { display: grid; gap: 2px; }

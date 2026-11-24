@@ -92,3 +92,21 @@ describe('counted steps within reach', () => {
     expect(out.title).toBe('Steps at the entrance')
   })
 })
+
+describe('a red or yellow answer always says why', () => {
+  const anneFrank = [{ source: 'OpenStreetMap', status: 'no', updatedAt: '2025-12-23', steps: null, doorWidthCm: null, detail: null }]
+  it('says the source gives no reason when there are no measurements', () => {
+    const out = forProfile(anneFrank, { id: 'walker', widthCm: 75, steps: 0 })
+    expect(out.tone).toBe('no')
+    expect(out.reasons[0].key).toMatch(/does not say why/)
+    expect(out.reasons[0].vars.source).toBe('OpenStreetMap')
+  })
+  it('does not add it when the source has a description', () => {
+    const out = forProfile([{ ...anneFrank[0], detail: 'Steps at the front door' }], { id: 'walker', widthCm: 75, steps: 0 })
+    expect(out.reasons).toHaveLength(0)
+  })
+  it('does not add it when measurements already explain the answer', () => {
+    const out = forProfile([{ ...anneFrank[0], steps: 2 }], { id: 'manual', widthCm: 70, steps: 0 })
+    expect(out.reasons.map((r) => r.key).some((k) => /does not say why/.test(k))).toBe(false)
+  })
+})

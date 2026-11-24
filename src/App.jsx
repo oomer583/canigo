@@ -10,7 +10,7 @@ import { mergePlaces, nameKey } from './merge.js'
 import { PROFILES, loadProfile, saveProfile } from './profiles.js'
 import { askText, LANGS, defaultLang } from './ask.js'
 import { CATEGORIES, detectCategory } from './categories.js'
-import { findNearby, uncheckedNearby, currentPosition, searchCityPacks } from './nearby.js'
+import { findNearby, uncheckedNearby, currentPosition, searchCityPacks, alternativesNear } from './nearby.js'
 import { looksLikeSentence, understand } from './understand.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 import { t, UI_LANGS, loadLang, saveLang, setLanguage } from './i18n.js'
@@ -163,9 +163,18 @@ function VolunteerForm({ place, onAdded }) {
   )
 }
 
-function Answer({ place, profile, photo, city, onAdded, onWrong }) {
+function Answer({ place, profile, photo, city, onAdded, onWrong, onOpen }) {
   const v = forProfile(place.records, profile)
   const [copied, setCopied] = useState(false)
+  const [alts, setAlts] = useState([])
+  useEffect(() => {
+    let live = true
+    setAlts([])
+    if (v.tone === 'no' && place.category) {
+      alternativesNear(place, { city, profile }).then((a) => { if (live) setAlts(a) }).catch(() => {})
+    }
+    return () => { live = false }
+  }, [place.name, place.lat, place.category, v.tone, profile?.id, city?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const [lang, setLang] = useState(() => defaultLang(city))
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=transit`
   const question = askText(profile, place.name, lang)
@@ -185,7 +194,7 @@ function Answer({ place, profile, photo, city, onAdded, onWrong }) {
         <strong>{t(v.title)}</strong>
       </div>
       {v.reasons.map((r) => (
-        <p key={r.key} className="detail">{t(r.key, r.vars)}</p>
+        <p key={r.key} className="detail">{t(r.key, r.vars?.source ? { ...r.vars, source: t(r.vars.source) } : r.vars)}</p>
       ))}
       {v.headline?.detail && <p className="detail">{v.headline.detail}</p>}
       {v.headline?.volunteer && <p className="conflict">{t('Added by a volunteer and not verified. Ask them before you go if you are unsure.')}</p>}
@@ -238,6 +247,24 @@ function Answer({ place, profile, photo, city, onAdded, onWrong }) {
             </span>
           </figcaption>
         </figure>
+      )}
+      {alts.length > 0 && (
+        <div className="alternatives">
+          <h3 className="subhead">{t('Places nearby you can get into')}</h3>
+          <ul>
+            {alts.map((i) => (
+              <li key={i.id}>
+                <button className="row-item" onClick={() => onOpen(i)}>
+                  <span className="dot" style={{ background: COLORS[i.verdict.tone] }} aria-hidden="true" />
+                  <span className="row-text">
+                    <strong>{i.name}</strong>
+                    <span>{t(i.verdict.title)} · {distanceMeters(i, place) < 1000 ? `${Math.round(distanceMeters(i, place))} m` : `${(distanceMeters(i, place) / 1000).toFixed(1)} km`}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       <div className="actions">
         <a className="button" href={directions} target="_blank" rel="noreferrer">{t('Directions')}</a>
@@ -366,9 +393,19 @@ export default function App() {
     }
   }
 
+  // From "Places nearby you can get into" on a red answer.
+  function openAlternative(item) {
+    const ctrl = freshRequest()
+    setPlace({ name: item.name, lat: item.lat, lng: item.lng, phone: item.phone, category: item.category, records: [...item.records] })
+    setQuery(item.name)
+    setNearby([])
+    setState('done')
+    loadPhoto(item, ctrl)
+  }
+
   function openFromList(item) {
     const ctrl = freshRequest()
-    setPlace({ name: item.name, lat: item.lat, lng: item.lng, phone: item.phone, records: [...item.records], fromList: true })
+    setPlace({ name: item.name, lat: item.lat, lng: item.lng, phone: item.phone, category: item.category, records: [...item.records], fromList: true })
     setNearby([...list.items, ...(list.unchecked || [])].filter((i) => i.id !== item.id))
     setState('done')
     loadPhoto(item, ctrl)
@@ -493,6 +530,7 @@ export default function App() {
         lat: match?.lat ?? target.lat,
         lng: match?.lng ?? target.lng,
         phone: match?.phone || target.phone,
+        category: match?.category || target.category || null,
         records
       })
       setNearby(groups.filter((g) => g !== match))
@@ -616,7 +654,7 @@ export default function App() {
             {state === 'done' && place?.fromList && list && (
               <button className="button ghost back" onClick={() => { setState('list'); setPlace(null) }}>{t('← Back to the list')}</button>
             )}
-            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} />}
+            {state === 'done' && place && <Answer key={place.name + place.lat} place={place} profile={profile} photo={photo} city={city} onAdded={addRecord} onWrong={markWrong} onOpen={openAlternative} />}
           </section>
 
           {state === 'done' && place && (

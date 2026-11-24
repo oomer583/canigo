@@ -92,5 +92,12 @@ export function forProfile(records, profile) {
   if (base.status === 'partial' && profile.steps > 0 && out.tone === 'partial') {
     out.title = 'Probably, with some effort'
   }
+  // A red or yellow answer must always say why. When the source gives no measurements and no
+  // description, say exactly that, instead of leaving a bare colour.
+  const h = base.headline
+  if (out.reasons.length === 0 && h && !h.ai && !h.detail && !out.conflict) {
+    if (base.status === 'no') out.reasons.push({ key: '{source} marks this entrance as not accessible but does not say why. No step count or door width is recorded.', vars: { source: h.source } })
+    else if (base.status === 'partial') out.reasons.push({ key: '{source} marks this entrance as partly accessible but does not say what that means. No step count or door width is recorded.', vars: { source: h.source } })
+  }
   return out
 }
