@@ -31,7 +31,7 @@ function Recenter({ at }) {
 
 function ProfilePicker({ current, onPick, onDemo, uiLang, onLang }) {
   return (
-    <div className="picker">
+    <main className="picker">
       {!current && (
         <section className="intro">
           <LangPicker value={uiLang} onChange={onLang} />
@@ -57,7 +57,7 @@ function ProfilePicker({ current, onPick, onDemo, uiLang, onLang }) {
           </button>
         ))}
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -84,7 +84,7 @@ function CityPicker({ current, onPick }) {
   }, [])
   const shown = (cities || []).filter((c) => !find.trim() || fold(`${c.name} ${c.country}`).includes(fold(find.trim())))
   return (
-    <div className="picker">
+    <main className="picker">
       <h2>{t('Which city do you live in?')}</h2>
       <p>{t("CanIGo saves that city's entrance data on your phone, so answers come fast and work offline. Other places still work online.")}</p>
       {cities === null && <p className="hint">{t('Loading cities…')}</p>}
@@ -104,7 +104,7 @@ function CityPicker({ current, onPick }) {
           <span>{t('Use online sources only')}</span>
         </button>
       </div>
-    </div>
+    </main>
   )
 }
 
