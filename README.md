@@ -5,7 +5,7 @@
 CanIGo tells you whether you can get into a building, based on what *you* need: how wide a door has to be for you, and how many steps you can manage. Every answer shows where it came from and how old it is. When sources disagree, it says so instead of guessing.
 
 - **Live:** [canigo-app.pages.dev](https://canigo-app.pages.dev). Tap **"See an example in Amsterdam"** to try it without setting anything up.
-- **In Türkiye:** pages.dev is blocked there, so use [canigo.kerimlio270.workers.dev](https://canigo.kerimlio270.workers.dev) (same app, see [Turkey mirror](#turkey-mirror)).
+- **In Türkiye, Iran or Russia:** pages.dev is blocked there, so use [canigo.kerimlio270.workers.dev](https://canigo.kerimlio270.workers.dev) (same app, see [Turkey mirror](#turkey-mirror)).
 <!-- - **Demo video:** add the YouTube link here -->
 
 Built for [Arbiter Hacks V1](https://arbiter-hacks-v1.devpost.com/) (General Track).
