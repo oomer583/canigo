@@ -125,7 +125,7 @@ pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Wor
 
 - [x] One answer per place, for your profile (door width, steps)
 - [x] Sources merged, every source with its date, newest leads, disagreements shown
-- [x] Offline city packs from OpenStreetMap (weekly GitHub Action)
+- [x] Offline city packs from OpenStreetMap (monthly GitHub Action)
 - [x] Overture Maps places, category search, accessible places first
 - [x] Street photo of the entrance (Mapillary) read by a vision model, as a hint only
 - [x] Sentence search with AI
@@ -133,6 +133,8 @@ pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Wor
 - [x] Volunteer reports ("Volunteer, not verified")
 - [x] Interface in English, Turkish, Azerbaijani and Russian
 - [x] Works offline for a saved city (PWA)
+- [x] Accessibility pass: axe (WCAG 2.2 AA) finds no issues; touch targets at least 44 px
+- [x] Visit counts with Cloudflare Web Analytics (no cookies); `?nostats=1` stops counting a test device
 - [x] 50 cities configured, with city search
 - [ ] Panoramax photos as a second image source
 - [ ] Step-free transit stations from GTFS `wheelchair_boarding`
