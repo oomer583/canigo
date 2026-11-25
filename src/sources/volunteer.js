@@ -36,7 +36,7 @@ export async function volunteerNear(place, signal) {
 export async function sendVolunteer(entry) {
   const res = await fetch('/api/contrib', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error || `Could not save (${res.status})`)
+  if (!res.ok) throw Object.assign(new Error(data.error || `Could not save (${res.status})`), { status: res.status })
   return recordFromVolunteer(data)
 }
 

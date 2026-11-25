@@ -135,10 +135,12 @@ function VolunteerForm({ place, onAdded }) {
       onAdded(rec)
       setState('done')
     } catch (err) {
-      setError(err.message)
+      // The server's own wording is English; show the reason in the user's language.
+      setError(err.status === 429 ? t('Too many reports from you this hour. Please try later.') : err.status === 400 ? t('Check what you entered and try again.') : t('Could not save right now. Please try again later.'))
       setState('error')
     }
   }
+  const empty = steps === '' && ramp === 'unknown' && door === ''
   if (state === 'done') return <p className="thanks">{t('Thank you. The next person who checks {name} will see what you added.', { name: place.name })}</p>
   if (!open) return <button className="link add-entrance" onClick={() => setOpen(true)}>{t('Been here? Add what the entrance is like')}</button>
   return (
@@ -166,8 +168,9 @@ function VolunteerForm({ place, onAdded }) {
         <input type="number" inputMode="numeric" min="40" max="300" value={door} onChange={(e) => setDoor(e.target.value)} placeholder={t('e.g. 85')} />
       </label>
       {state === 'error' && <p className="warn">{error}</p>}
+      {empty && <p className="hint small">{t('Fill in at least one thing you saw.')}</p>}
       <div className="ask-actions">
-        <button type="submit" disabled={state === 'saving'}>{state === 'saving' ? t('Saving…') : t('Add')}</button>
+        <button type="submit" disabled={state === 'saving' || empty}>{state === 'saving' ? t('Saving…') : t('Add')}</button>
         <button type="button" className="button ghost" onClick={() => setOpen(false)}>{t('Cancel')}</button>
       </div>
     </form>
