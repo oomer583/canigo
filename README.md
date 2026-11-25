@@ -84,7 +84,7 @@ video/rec.mjs             records real app sessions for the demo video
 npm install
 cp .env.example .env        # paste your accessibility.cloud app token into .env
 npm run dev
-npm test                    # 76 tests (Vitest)
+npm test                    # 80 tests (Vitest)
 ```
 
 Get a free accessibility.cloud token by creating an organization and an API client at [accessibility.cloud](https://www.accessibility.cloud). It is meant for browser use; keep it out of git anyway (`.env` is ignored).
@@ -119,7 +119,23 @@ Without these bindings the app still works with the city packs and accessibility
 
 ## Turkey mirror
 
-pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Worker that serves the same site at canigo.kerimlio270.workers.dev by forwarding every request to canigo-app.pages.dev and keeping redirects on the mirror's address. Because the Worker makes the requests, Turkish visitors share one volunteer rate limit.
+pages.dev is blocked in Türkiye, and some Turkish providers also block workers.dev. Two mirrors forward every request to canigo-app.pages.dev, so they always show the same build:
+
+- `workers/turkey-mirror.js`, a Cloudflare Worker at canigo.kerimlio270.workers.dev. Paste it into the dashboard: Workers & Pages > canigo > Edit code > Deploy.
+- `vercel.json`, a Vercel project that builds nothing and rewrites every path to pages.dev.
+
+Because the mirror makes the requests, visitors on a mirror share one volunteer rate limit.
+
+## Privacy
+
+What you cannot collect cannot leak, so CanIGo keeps as little as possible:
+
+- No accounts, names, emails or phone numbers.
+- A volunteer report stores only the place name, its coordinates, steps, ramp and door width.
+- IP addresses are never stored. The rate limit uses a hash of the address and the hour, kept for one hour in the edge cache.
+- Visit counts use Cloudflare Web Analytics, which sets no cookies.
+
+If CanIGo ever needs accounts, it will ask only for an email, and never for health details, the kind of disability, or a home address.
 
 ## Roadmap
 
@@ -136,6 +152,7 @@ pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Wor
 - [x] Accessibility pass: axe (WCAG 2.2 AA) finds no issues; touch targets at least 44 px
 - [x] Visit counts with Cloudflare Web Analytics (no cookies); `?nostats=1` stops counting a test device
 - [x] 50 cities configured, with city search
+- [x] Copies on unofficial addresses say so and link to the official app
 - [ ] Panoramax photos as a second image source
 - [ ] Step-free transit stations from GTFS `wheelchair_boarding`
 - [ ] Volunteer reports reviewed by other volunteers
@@ -151,4 +168,6 @@ pages.dev is blocked in Türkiye. `workers/turkey-mirror.js` is a Cloudflare Wor
 
 ## License
 
-MIT
+Code: MIT. The CanIGo name is not covered by the license; copies must use a different name. See [NAME.md](NAME.md).
+
+Copies running anywhere other than the [official addresses](src/official.js) show a note pointing to the official app.

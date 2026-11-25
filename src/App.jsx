@@ -14,6 +14,7 @@ import { findNearby, uncheckedNearby, currentPosition, searchCityPacks, alternat
 import { looksLikeSentence, understand } from './understand.js'
 import { volunteerNear, sendVolunteer, reportWrong } from './sources/volunteer.js'
 import { notCounted } from './stats.js'
+import { isOfficial, OFFICIAL_URL } from './official.js'
 import { t, UI_LANGS, loadLang, saveLang, setLanguage } from './i18n.js'
 
 const COLORS = { yes: '#1f8a4c', partial: '#d99a12', no: '#c2352b', unknown: '#8a8f98' }
@@ -576,6 +577,11 @@ export default function App() {
 
   return (
     <div className="app">
+      {!isOfficial(window.location.hostname) && (
+        <p className="not-official" role="note">
+          {t('This is a copy, not the official CanIGo. The official app is at')} <a href={OFFICIAL_URL}>{OFFICIAL_URL.replace('https://', '')}</a>
+        </p>
+      )}
       <header>
         <div className="brand">
           <h1>CanIGo</h1>
@@ -714,6 +720,7 @@ export default function App() {
           <footer className="foot">
             {profile && <button className="link" onClick={startOver}>{t('Start over')}</button>}
             {notCounted() && <p className="hint small">Visits from this device are not counted.</p>}
+            <p className="credits">{t('Official address:')} <a href={OFFICIAL_URL}>{OFFICIAL_URL.replace('https://', '')}</a></p>
             <p className="credits">{t('Data: © OpenStreetMap contributors, accessibility.cloud, Overture Maps Foundation, volunteers. Photos: Mapillary (CC BY-SA).')}</p>
             <LangPicker value={uiLang} onChange={changeLang} />
           </footer>

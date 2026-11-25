@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo skip",
+  "buildCommand": "mkdir -p vercel-out",
+  "outputDirectory": "vercel-out",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "https://canigo-app.pages.dev/$1" }
+  ]
+}
