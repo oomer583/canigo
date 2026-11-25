@@ -1,6 +1,8 @@
 // Visit counts with Cloudflare Web Analytics: no cookies, no personal data, only page views.
 // Open the site once with ?nostats=1 on a device to stop counting it (for testing); ?nostats=0 undoes it.
 // The setting is per address, so do it on both canigo-app.pages.dev and the Türkiye mirror.
+import { isOfficial } from './official.js'
+
 const TOKEN = '6ed43d34957a49fcb90ec8e43f7db523'
 const KEY = 'canigo.nostats'
 
@@ -25,7 +27,12 @@ export function startStats() {
   } catch {
     // storage blocked: count the visit as usual
   }
-  if (notCounted() || ['localhost', '127.0.0.1'].includes(location.hostname)) return
+  const copy = !isOfficial(location.hostname)
+  // On the official site, honour the per-device opt-out and skip local dev.
+  // On a copy, always report so the owner can see it in the official analytics,
+  // tagged by the copy's hostname. (A copier can still delete this; nothing
+  // client-side can prevent that. It only catches copies that leave the code.)
+  if (!copy && (notCounted() || ['localhost', '127.0.0.1'].includes(location.hostname))) return
   const s = document.createElement('script')
   s.defer = true
   s.src = 'https://static.cloudflareinsights.com/beacon.min.js'
