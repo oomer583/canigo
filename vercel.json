@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "echo skip",
-  "buildCommand": "mkdir -p vercel-out && echo '<!doctype html><title>CanIGo</title><p>Loading CanIGo…</p>' > vercel-out/index.html",
+  "buildCommand": "mkdir -p vercel-out && echo 'This Vercel project only mirrors canigo-app.pages.dev; it serves no files of its own.' > vercel-out/README.txt",
   "outputDirectory": "vercel-out",
   "rewrites": [
     { "source": "/(.*)", "destination": "https://canigo-app.pages.dev/$1" }
