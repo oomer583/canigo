@@ -512,7 +512,9 @@ export default function App() {
       // (with online sources) and a volunteer who went there can still add its entrance.
       let outside = null
       if (!target && city) {
-        const [far] = await search(name, ctrl.signal, null).catch(() => [])
+        // Not too far away, though: a nickname typed in Baku must not open a namesake on another continent.
+        const centre = { lat: (city.bbox[1] + city.bbox[3]) / 2, lng: (city.bbox[0] + city.bbox[2]) / 2 }
+        const far = (await search(name, ctrl.signal, null).catch(() => [])).find((r) => distanceMeters(r, centre) < 1500000)
         if (far) { target = far; outside = city.name }
       }
       if (!target) {

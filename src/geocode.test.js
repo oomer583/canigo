@@ -31,3 +31,17 @@ describe('chosen city wins', () => {
     expect(inBox(null, 35.32, -119.1)).toBe(true)
   })
 })
+
+import { looksLikeName } from './geocode.js'
+
+describe('fuzzy results must look like the name typed', () => {
+  it('drops unrelated typo matches', () => {
+    expect(looksLikeName('Frans van Mierisstraat', 'Mitri')).toBe(false)
+  })
+  it('keeps real matches, including partial words', () => {
+    expect(looksLikeName('ITRDI (Idman Tibbi Reabilitasiya Diaqnostika İnstitutu)', 'İdman Tibb və Reabilitasiya')).toBe(true)
+    expect(looksLikeName('Rijksmuseum', 'rijksmuseum')).toBe(true)
+    expect(looksLikeName('Anne Frank Huis', 'Anne Frank')).toBe(true)
+    expect(looksLikeName('Café De Wasserette', 'wasserette')).toBe(true)
+  })
+})

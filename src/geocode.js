@@ -20,6 +20,20 @@ export function withoutCity(query, cityName) {
   return query.replace(re, ' ').replace(/\s+/g, ' ').trim() || query.trim()
 }
 
+// Photon forgives typos, sometimes too much: "Mitri" in Amsterdam returned "Frans van Mierisstraat".
+// Keep a result only if its name shares a real word with what was typed (the first 4 letters of a
+// word are enough, so "Tibb" still finds "Tibbi").
+const fold = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/ə/g, 'e')
+const words = (s) => fold(s).split(/[^a-z0-9\u0400-\u04ff]+/).filter((w) => w.length >= 3)
+export function looksLikeName(name, query) {
+  const n = fold(name)
+  const q = fold(query).trim()
+  if (!q) return false
+  if (n.includes(q)) return true
+  const nw = words(name)
+  return words(query).some((w) => nw.some((x) => x === w || (w.length >= 4 && x.length >= 4 && (x.startsWith(w.slice(0, 4)) && (x.startsWith(w) || w.startsWith(x))))))
+}
+
 export function inBox(bbox, lat, lng) {
   return !bbox || (lng >= bbox[0] && lng <= bbox[2] && lat >= bbox[1] && lat <= bbox[3])
 }
@@ -31,7 +45,7 @@ export async function search(query, signal, city = null) {
   const exact = keep(await nominatim(q, signal, bbox))
   if (exact.length) return exact
   for (const v of queryVariants(q)) {
-    const rows = keep(await photon(v, signal, bbox))
+    const rows = keep(await photon(v, signal, bbox)).filter((r) => looksLikeName(r.name, v))
     if (rows.length) return rows
   }
   return []
