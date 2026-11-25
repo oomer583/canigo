@@ -6,7 +6,8 @@ export const OFFICIAL_URL = 'https://canigo-app.pages.dev'
 
 export const OFFICIAL_HOSTS = [
   'canigo-app.pages.dev',
-  'canigo.kerimlio270.workers.dev'
+  'canigo.kerimlio270.workers.dev',
+  'canigo-three.vercel.app'
 ]
 
 export function isOfficial(host) {
