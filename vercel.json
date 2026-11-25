@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "echo skip",
-  "buildCommand": "mkdir -p vercel-out",
+  "buildCommand": "mkdir -p vercel-out && echo '<!doctype html><title>CanIGo</title><p>Loading CanIGo…</p>' > vercel-out/index.html",
   "outputDirectory": "vercel-out",
   "rewrites": [
     { "source": "/(.*)", "destination": "https://canigo-app.pages.dev/$1" }
