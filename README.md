@@ -118,11 +118,13 @@ Without these bindings the app still works with the city packs and accessibility
 
 ## Turkey mirror
 
-The app is hosted on Cloudflare Pages at canigo-app.pages.dev. That address is the origin (it runs the Pages Functions), but it is blocked in Türkiye and some other countries. So the public address is a Vercel mirror that forwards every request to the origin and works worldwide:
+The engine runs on Cloudflare Pages at canigo-app.pages.dev. It stays on Cloudflare because the parts that cost money elsewhere are free here: the AI (Workers AI runs the Llama and Gemma models), the volunteer database (D1) and the Pages Functions all live on the Cloudflare free tier. That is why the project does not move off it.
+
+canigo-app.pages.dev used to be the public address too, but it is blocked in Türkiye and some other countries, so it is no longer given out. It is kept only as the engine. The public address is a Vercel mirror that forwards every request to it and works worldwide:
 
 - `vercel.json`, the public mirror at canigo-three.vercel.app. It builds nothing and rewrites every path to canigo-app.pages.dev. Tested from Türkiye, Iran and Russia.
 
-canigo-app.pages.dev stays live as the origin; do not delete it, or the mirror breaks. Because the mirror makes the requests, visitors share one volunteer rate limit.
+Do not delete canigo-app.pages.dev, or the mirror has nothing to serve. Because the mirror makes the requests, visitors share one volunteer rate limit.
 
 ## Privacy
 
