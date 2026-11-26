@@ -68,7 +68,7 @@ scripts/
   cities.json             the cities and their bounding boxes
   build-pack.mjs          OSM extract -> public/packs/<city>.json
   build-places.py         Overture Maps places -> public/packs/<city>-places.json
-workers/turkey-mirror.js  the Turkey mirror
+vercel.json               public mirror that forwards to the pages.dev origin
 video/rec.mjs             records real app sessions for the demo video
 ```
 
@@ -118,12 +118,11 @@ Without these bindings the app still works with the city packs and accessibility
 
 ## Turkey mirror
 
-The app is hosted on Cloudflare Pages at canigo-app.pages.dev. That address is the origin (it runs the Pages Functions), but it is blocked in Türkiye, and some Turkish providers also block the workers.dev mirror. So the public address is a Vercel mirror that forwards every request to the origin and works worldwide:
+The app is hosted on Cloudflare Pages at canigo-app.pages.dev. That address is the origin (it runs the Pages Functions), but it is blocked in Türkiye and some other countries. So the public address is a Vercel mirror that forwards every request to the origin and works worldwide:
 
 - `vercel.json`, the public mirror at canigo-three.vercel.app. It builds nothing and rewrites every path to canigo-app.pages.dev. Tested from Türkiye, Iran and Russia.
-- `workers/turkey-mirror.js`, an older Cloudflare Worker mirror at canigo.kerimlio270.workers.dev, kept as a backup.
 
-canigo-app.pages.dev stays live as the origin; do not delete it, or both mirrors break. Because a mirror makes the requests, visitors on a mirror share one volunteer rate limit.
+canigo-app.pages.dev stays live as the origin; do not delete it, or the mirror breaks. Because the mirror makes the requests, visitors share one volunteer rate limit.
 
 ## Privacy
 

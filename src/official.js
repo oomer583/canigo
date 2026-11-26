@@ -8,7 +8,6 @@ export const OFFICIAL_URL = 'https://canigo-three.vercel.app'
 
 export const OFFICIAL_HOSTS = [
   'canigo-app.pages.dev',
-  'canigo.kerimlio270.workers.dev',
   'canigo-three.vercel.app'
 ]
 

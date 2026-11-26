@@ -4,7 +4,7 @@ import { isOfficial } from './official.js'
 describe('isOfficial', () => {
   it('accepts the official addresses and local development', () => {
     expect(isOfficial('canigo-app.pages.dev')).toBe(true)
-    expect(isOfficial('canigo.kerimlio270.workers.dev')).toBe(true)
+    expect(isOfficial('canigo-three.vercel.app')).toBe(true)
     expect(isOfficial('3f2a1b.canigo-app.pages.dev')).toBe(true)
     expect(isOfficial('localhost')).toBe(true)
   })
