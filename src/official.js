@@ -2,7 +2,9 @@
 // other address shows a note pointing people to the official app, so nobody mistakes it for ours.
 // Add a host here when a new official mirror goes live.
 
-export const OFFICIAL_URL = 'https://canigo-app.pages.dev'
+// The one address shown to people (footer, copy note). Other official hosts below
+// are the technical origin and mirrors; they stay official but are not advertised.
+export const OFFICIAL_URL = 'https://canigo-three.vercel.app'
 
 export const OFFICIAL_HOSTS = [
   'canigo-app.pages.dev',

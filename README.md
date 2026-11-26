@@ -4,8 +4,7 @@
 
 CanIGo tells you whether you can get into a building, based on what *you* need: how wide a door has to be for you, and how many steps you can manage. Every answer shows where it came from and how old it is. When sources disagree, it says so instead of guessing.
 
-- **Live:** [canigo-app.pages.dev](https://canigo-app.pages.dev). Tap **"See an example in Amsterdam"** to try it without setting anything up.
-- **In Türkiye, Iran or Russia:** pages.dev is blocked there, so use [canigo.kerimlio270.workers.dev](https://canigo.kerimlio270.workers.dev) (same app, see [Turkey mirror](#turkey-mirror)).
+- **Live:** [canigo-three.vercel.app](https://canigo-three.vercel.app). Tap **"See an example in Amsterdam"** to try it without setting anything up. This one address works worldwide, including Türkiye, Iran and Russia.
 <!-- - **Demo video:** add the YouTube link here -->
 
 Built for [Arbiter Hacks V1](https://arbiter-hacks-v1.devpost.com/) (General Track).
@@ -119,12 +118,12 @@ Without these bindings the app still works with the city packs and accessibility
 
 ## Turkey mirror
 
-pages.dev is blocked in Türkiye, and some Turkish providers also block workers.dev. Two mirrors forward every request to canigo-app.pages.dev, so they always show the same build:
+The app is hosted on Cloudflare Pages at canigo-app.pages.dev. That address is the origin (it runs the Pages Functions), but it is blocked in Türkiye, and some Turkish providers also block the workers.dev mirror. So the public address is a Vercel mirror that forwards every request to the origin and works worldwide:
 
-- `workers/turkey-mirror.js`, a Cloudflare Worker at canigo.kerimlio270.workers.dev. Paste it into the dashboard: Workers & Pages > canigo > Edit code > Deploy.
-- `vercel.json`, a Vercel project that builds nothing and rewrites every path to pages.dev.
+- `vercel.json`, the public mirror at canigo-three.vercel.app. It builds nothing and rewrites every path to canigo-app.pages.dev. Tested from Türkiye, Iran and Russia.
+- `workers/turkey-mirror.js`, an older Cloudflare Worker mirror at canigo.kerimlio270.workers.dev, kept as a backup.
 
-Because the mirror makes the requests, visitors on a mirror share one volunteer rate limit.
+canigo-app.pages.dev stays live as the origin; do not delete it, or both mirrors break. Because a mirror makes the requests, visitors on a mirror share one volunteer rate limit.
 
 ## Privacy
 
